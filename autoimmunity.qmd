@@ -20,7 +20,7 @@ The following filters where applied: "Epitope Structure", "Include Positive Assa
 
 These filters will ensure that I get only Linear MHC class II epitopes, that is found only with MHC assays, meaning that i will be able to find to MHC allele that was used. This will allow me to find the binding core, using netpanMHCII. and then find the anchor positions on the peptides. With the found anchor positions we can now weigh the conservation of this position more, allowing for more accurate cross-reactivity check.
 
-This Returned \~5588 epitopes for analyzation.
+This Returned \~? epitopes for analyzation.
 
 ### libraries
 
@@ -31,28 +31,9 @@ This Returned \~5588 epitopes for analyzation.
 library("tidyverse")
 library("Biostrings")
 library("ggseqlogo")
-
-```
-
-```{r}
-#| echo: false
-# Define the write_fasta function
-write_fasta <- function(df, id_col, seq_col, file_path) {
-  # Open a file connection
-  con <- file(file_path, "w")
-  
-  # Create FASTA entries
-  fasta_entries <- df |>
-    rowwise() |>  # Ensure row-wise operation
-    mutate(fasta_entry = paste0(">", !!sym(id_col), "\n", !!sym(seq_col))) |> 
-    pull(fasta_entry)
-  
-  # Write to file
-  writeLines(fasta_entries, con)
-  
-  # Close the file connection
-  close(con)
-}
+library("biomaRt")
+library("pdftools")
+library("magick")
 ```
 
 ### Data import
@@ -61,69 +42,73 @@ write_fasta <- function(df, id_col, seq_col, file_path) {
 #| message: false
 #| warning: false
 
-# Exported table from IEDB, Epitope page
-autoimmune_antigens <- read_csv("./Data/autoimmune_antigens.csv")
+source("./functions.R")
 
-# Exported table from IEDB, Assay page
-autoimmune_MHC_restriction <- read_csv("./Data/autoimmune_MHC_restriction.csv")
+# Reading in headers
+headers <- read_csv("./Data/autoimmune_data.csv", n_max = 2, col_names = FALSE)
+
+# Combine the first two rows into a single header
+new_col_names <- paste(headers[1,], headers[2,], sep = "_")
+new_col_names <- gsub("_NA$", "", new_col_names)
+
+autoimmune_data <- read_csv("./Data/autoimmune_data.csv", skip = 2, col_names = new_col_names)
 
 # From class will be replaced with bigger bacteria proteome dataset
-fasta <- readAAStringSet("./Data/IEDB_infectius_peptides.fsa",)
+pathogen_fasta <- readAAStringSet("./Data/IEDB_infectius_peptides.fsa",)
 
 # Clustered bacteria proteome dataset using mmseq2
-clusters <- read_tsv("./Data/infectius_cluster.tsv", col_names = c("cluster_ID", "member_ID"))
+pathogen_clusters <- read_tsv("./Data/infectius_cluster.tsv", col_names = c("cluster_ID", "member_ID"))
 
 # From NetMHCIIpan containing information about binding core
 DRB5_0101_NetMHCIIpan <- read_csv("./Data/DRB5_0101_NetMHCIIpan.csv", skip = 1, col_names = TRUE)
 DRB1_1501_NetMHCIIpan <- read_csv("./Data/DRB1_1501_NetMHCIIpan.csv", skip = 1, col_names = TRUE)
+DRB1_0401_NetMHCIIpan <- read_csv("./Data/DRB1_0401_NetMHCIIpan.csv", skip = 1, col_names = TRUE)
+
+# Experimentally verifiyed pathogenic peptides causing autoimmune diseases
+exp_verified_patho_peps <- read_csv("./Data/Exp_verified_pathogenic_peptides.txt")
 ```
 
 ### Wrangling IEDB tables for netMHCIIpan
 
 ```{r}
+known_diseases <- c('multiple sclerosis',"type 1 diabetes mellitus", "rheumatoid arthritis", "myasthenia gravis","systemic lupus erythematosus", "Graves' disease, Graves disease", "autoimmune hemolytic anemia", "psoriasis", "autoimmune uveitis", "autoimmune thyroiditis", "vitiligo", "alopecia areata", "Vogt-Koyanagi-Harada disease", "Goodpasture syndrome", "Behcet's disease", 'systemic lupus erythematosus', 'neuromyelitis optica', 'primary biliary cholangitis', 'autoimmune hepatitis', 'autoimmune vasculitis', 'pemphigus',"Sjogren's syndrome")
 
-# Making the epitope dataset tidy 
-autoimmune_antigens <- autoimmune_antigens |>
-  dplyr::rename("peptides" = "Epitope - Name",
-         "protein_source" = "Epitope - Source Molecule",
-         "organism_source" = "Epitope - Source Organism",
-         "ID" = "Epitope ID - IEDB IRI") |>
-  mutate(peptides = str_trim(str_replace(peptides, "\\+.*", "")),
-         ID = str_trim(str_extract(ID, "\\d+$"))) |>
-  filter(str_detect(peptides, "^[ACDEFGHIKLMNPQRSTVWY]+$")) |>
-  dplyr::select(ID, peptides, protein_source, organism_source) |>
-  filter(str_length(peptides) > 12 & str_length(peptides) < 26)
 
-# Making the Assay dataset tidy
-autoimmune_MHC_restriction <- autoimmune_MHC_restriction |>
-  dplyr::rename("ID" = `Epitope - Epitope IRI`,
-                "MHCII_Allele" = `MHC Restriction - Name`) |>
-  mutate(ID = str_trim(str_extract(ID, "\\d+$"))) |>
-  filter(!is.na(ID)) |>
-  select(ID, MHCII_Allele)
-
-# Merging to get information about peptide and MHC allele in one table
-merged_peptides <- left_join(autoimmune_antigens, autoimmune_MHC_restriction, by = "ID") |>
-  filter(!is.na(MHCII_Allele)) |>
+# Tidying data and filtering with relevant filters
+autoimmune_data <- autoimmune_data |>
+  filter(`Epitope_Source Organism` == "Homo sapiens") |> # Remove this and add filter in IEDB
+  filter(is.na(`Epitope_Modified residues`)) |>
+  dplyr::rename("Assay_ID" = "Assay ID_IEDB IRI",
+                "Epitope_ID" = "Epitope_IEDB IRI",
+                "Epitope" = "Epitope_Name",
+                "Epitope_Protein" = "Epitope_Molecule Parent",
+                "Epitope_Protein_annot" = "Epitope_Molecule Parent IRI",
+                "Disease" = "1st in vivo Process_Disease",
+                "MHC_Allele" = "MHC Restriction_Name") |>
+  mutate(Epitope = str_trim(str_replace(Epitope, "\\+.*", "")),
+         Assay_ID = as.integer(str_trim(str_extract(Assay_ID, "\\d+$"))),
+         Epitope_ID = as.integer(str_trim(str_extract(Epitope_ID, "\\d+$"))),
+         Epitope_Protein_annot = str_trim(str_extract(Epitope_Protein_annot, "(?<=/)[^/]+$"))) |>
+  dplyr::select(Assay_ID, Epitope_ID, Epitope, Epitope_Protein, Epitope_Protein_annot, Disease, MHC_Allele) |>
+  filter(str_length(Epitope) > 12 & str_length(Epitope) < 26) |>
+  filter(!is.na(MHC_Allele) & !is.na(Epitope)) |> filter(str_detect(Epitope, "^[ACDEFGHIKLMNPQRSTVWY]+$")) |>
+  filter(Disease %in% known_diseases) |>
   unique()
 
-# Summary information to use for NetMHCIIpan (MHC allele)
-merged_peptides |>
-  group_by(MHCII_Allele) |>
-  summarise(n())
-
-# Write fasta file for netMHCIIpan for the chosen allele of interest
-merged_peptides |>
-  filter(MHCII_Allele == "HLA-DRB5*01:01") |>
-  write_fasta("ID", "peptides", "./Data/DRB5_0101.fasta")
-
-# Write fasta file for netMHCIIpan for the chosen allele of interest
-merged_peptides |>
-  filter(MHCII_Allele == "HLA-DRB1*15:01") |>
-  write_fasta("ID", "peptides", "./Data/DRB1_1501.fasta")
+autoimmune_data |>
+  group_by(MHC_Allele) |>
+  summarise(amount = n()) |>
+  arrange(desc(amount))
 ```
 
-We found here that about \~1000 peptides was found using the DRB5_0101 as the restriction allele, we can therefore assume that the anchors matches that of this allele and run it through NetMHCIIpan.
+### Writing fastas:
+
+```{r}
+# Write fasta file for netMHCIIpan for the chosen allele of interest
+write_fasta("HLA-DRB5\\*01:01", autoimmune_data, "Assay_ID", "Epitope", "./Data/DRB5_0101.fasta")
+write_fasta("HLA-DRB1\\*15:01", autoimmune_data, "Assay_ID", "Epitope", "./Data/DRB1_1501.fasta")
+write_fasta("HLA-DRB1\\*04:01", autoimmune_data, "Assay_ID", "Epitope", "./Data/DRB1_0401.fasta")
+```
 
 ### NetMHCIIpan output wrangling and decision of anchorpoints:
 
@@ -139,26 +124,10 @@ based on www.syfpeithi.de we found that typical anchorpoints for DRB5_0101 are
 
 ```{r}
 
-# Tidying data
-wrangled_DRB5_0101 <- DRB5_0101_NetMHCIIpan |>
-  filter(Rank < 5) |>
-  distinct(ID, .keep_all = TRUE) |>
-  select(ID, Core)
-
-wrangled_DRB1_1501 <- DRB1_1501_NetMHCIIpan |>
-  filter(Rank < 5) |>
-  distinct(ID, .keep_all = TRUE) |>
-  select(ID, Core)
-
-# Make logo plot of the DRB5_0101 cores
-ggseqlogo(wrangled_DRB5_0101$Core, method = "bits") +
-  ggtitle("Sequence Logo Plot")
-
-ggseqlogo(wrangled_DRB1_1501$Core, method = "bits") +
-  ggtitle("Sequence Logo Plot")
+DRB1_0401_motifs <- MHC_motif_finder("DRB1_0401")
+DRB1_1501_motifs <- MHC_motif_finder("DRB1_1501")
+DRB5_0101_motifs <- MHC_motif_finder("DRB5_0101")
 ```
-
-We find that anchor P1 (F and L) and P9(K and R) fits nicely with what was reported in syfpeithi, therefore we will use these for filtering.
 
 ### Cluster wrangeling using mmseqs2:
 
@@ -181,91 +150,69 @@ The discovery from this .fsa file was, that the sequences that had the same acce
 ```{r}
 
 # Making the pathogen proteome fastafile to a dataframe
-distinct_sequences <- data.frame(
-    header = names(fasta),
-    sequence = as.character(fasta)
-) |>
-  distinct(header, .keep_all = TRUE)
+pathogen_seqs <- data.frame(
+    header = names(pathogen_fasta),
+    sequence = as.character(pathogen_fasta)
+)
 
 # Filtering pathogen proteome based on the found anchors
-distinct_sequences_DRB5_0101 <- distinct_sequences |>
-  filter(str_detect(sequence, "[FY].{7}[KR]"))
+pathogen_seqs_DRB5_0101 <- pathogen_seqs |>
+  filter(str_detect(sequence, "[FYILVW].{2}[ALIVEQ].{1}[ASGPNI].{2}[KR]"))
 
-distinct_sequences_DRB1_1501 <- distinct_sequences |>
-  filter(str_detect(sequence, "[ILF].{2}[YF].{1}[DNS].{2}[LVA]"))
+pathogen_seqs_DRB1_1501 <- pathogen_seqs |>
+  filter(str_detect(sequence, "[ILVM].{2}[YFW].{1}[SNGDA].{2}[LVAI]"))
+
+pathogen_seqs_DRB1_0401 <- pathogen_seqs |>
+  filter(str_detect(sequence, "[YFIW].{2}[DEAQM].{1}[TNSDV].{2}[ASGQ]"))
 ```
 
-### Checking for cross-reactivity DRB5_0101:
+### Checking for cross-reactivity:
 
 ```{r}
+percent_identity <- 50
 
-# Running similarity check with 3 acceptable errors on our now filtered proteome data
-peptide_counts <- autoimmune_antigens |>
-  mutate(matches = map(peptides, ~{
-    matched_indices <- which(vcountPattern(pattern = .x, 
-                                           subject = distinct_sequences_DRB5_0101$sequence,
-                                           max.mismatch = 6,
-                                           with.indels = TRUE) > 0)
-    list(Pathogen_ID = distinct_sequences_DRB5_0101$header[matched_indices],
-         count = length(matched_indices))
-  })) |>
-  unnest_wider(matches)  # Splitting the list into 'headers' and 'count' columns
+# Running cross reactivity test
+DRB5_0101_results <- cross_reactive_test(50, autoimmune_data, pathogen_seqs_DRB5_0101, 
+                      "HLA-DRB5\\*01:01")
+DRB1_1501_results <- cross_reactive_test(50, autoimmune_data, pathogen_seqs_DRB1_1501, 
+                      "HLA-DRB1\\*15:01")
+DRB1_0401_results <- cross_reactive_test(50, autoimmune_data, pathogen_seqs_DRB1_0401, 
+                      "HLA-DRB1\\*04:01")
 
-
-peptide_counts |> 
-  filter(count >= 1) |>
-  arrange(desc(count))
-
-
-peptide_counts |>
-  group_by(organism_source) |> 
-  summarise(Matches_per_protein = sum(count))
+DRB5_0101_results
+DRB1_1501_results
+DRB1_0401_results
 ```
 
-### Checking for cross-reactivity DRB1_1501:
+### Converting gene name for comparison
 
 ```{r}
-# Running similarity check with 3 acceptable errors on our now filtered proteome data
-peptide_counts <- autoimmune_antigens |>
-  mutate(matches = map(peptides, ~{
-    matched_indices <- which(vcountPattern(pattern = .x, 
-                                           subject = distinct_sequences_DRB1_1501$sequence,
-                                           max.mismatch = 6,
-                                           with.indels = TRUE) > 0)
-    list(Pathogen_ID = distinct_sequences_DRB1_1501$header[matched_indices],
-         count = length(matched_indices))
-  })) |>
-  unnest_wider(matches)  # Splitting the list into 'headers' and 'count' columns
+#| eval: false
+
+# Function to get organism from UniProt ID using biomaRt
+get_organism_from_uniprot_biomart <- function(uniprot_id) {
+  # Use ENSEMBL's mart and dataset for human genes
+  ensembl <- useMart("ENSEMBL_MART_ENSEMBL", dataset = "hsapiens_gene_ensembl")
+  
+  # Query the UniProt ID to get organism information
+  organism_info <- getBM(attributes = c("uniprot_swissprot", "organism_name"),
+                         filters = "uniprot_swissprot",
+                         values = uniprot_id,
+                         mart = ensembl)
+  
+  # Return organism name
+  return(organism_info$organism_name)
+}
+
+# Example usage
+uniprot_id <- "P03211"  # Replace with your UniProt ID
+organism <- get_organism_from_uniprot_biomart(uniprot_id)
 
 
-peptide_counts |> 
-  filter(count >= 1) |>
-  arrange(desc(count))
-
-
-peptide_counts |>
-  group_by(organism_source) |> 
-  summarise(Matches_per_protein = sum(count))
+autoimmune_data |>
+  group_by(Disease) |>
+  summarise(n())
 ```
-
-### Checking for effectivity of this method of caputuring crossreactivity
 
 ```{r}
-
-autoimmune_antigens |>
-  mutate(matches = map(peptides, ~{
-    matched_indices <- which(vcountPattern(pattern = .x, 
-                                           subject = sample(distinct_sequences$sequence, 50),
-                                           max.mismatch = 6,
-                                           with.indels = TRUE) > 0)
-    list(Pathogen_ID = distinct_sequences$header[matched_indices],
-         count = length(matched_indices))
-  })) |>
-  unnest_wider(matches) |>
-  group_by(organism_source) |> 
-  summarise(Matches_per_protein = sum(count))
 ```
-
-### Conclusion
-
-The result tells us the 36 peptides from the filtered proteome dataset, showed potential cross-reactivity. For further analysis one could include more MHC alleles and include information about TCR contact points. Also the similarity check needs to be backed up by evidence and perhaps be changed.
