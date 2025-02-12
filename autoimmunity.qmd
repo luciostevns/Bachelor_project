@@ -105,9 +105,9 @@ autoimmune_data |>
 
 ```{r}
 # Write fasta file for netMHCIIpan for the chosen allele of interest
-write_fasta("HLA-DRB5\\*01:01", autoimmune_data, "Assay_ID", "Epitope", "./Data/DRB5_0101.fasta")
-write_fasta("HLA-DRB1\\*15:01", autoimmune_data, "Assay_ID", "Epitope", "./Data/DRB1_1501.fasta")
-write_fasta("HLA-DRB1\\*04:01", autoimmune_data, "Assay_ID", "Epitope", "./Data/DRB1_0401.fasta")
+#write_fasta("HLA-DRB5\\*01:01", autoimmune_data, "Assay_ID", "Epitope", "./Data/DRB5_0101.fasta")
+#write_fasta("HLA-DRB1\\*15:01", autoimmune_data, "Assay_ID", "Epitope", "./Data/DRB1_1501.fasta")
+#write_fasta("HLA-DRB1\\*04:01", autoimmune_data, "Assay_ID", "Epitope", "./Data/DRB1_0401.fasta")
 ```
 
 ### NetMHCIIpan output wrangling and decision of anchorpoints:
