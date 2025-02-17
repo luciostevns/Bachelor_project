@@ -194,10 +194,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
 <span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unique</span>()</span>
 <span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a><span class="co"># Looking a MHC allele distrubution</span></span>
+<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a><span class="co"># Find MHC restriction for epitopes to look into.</span></span>
 <span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a>autoimmune_data <span class="sc">|&gt;</span></span>
 <span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(MHC_Allele) <span class="sc">|&gt;</span></span>
-<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">amount =</span> <span class="fu">n</span>()) <span class="sc">|&gt;</span></span>
+<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">amount =</span> <span class="fu">n</span>(), <span class="at">.groups =</span> <span class="st">"drop"</span>) <span class="sc">|&gt;</span></span>
 <span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(amount))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 71 × 2
@@ -262,14 +262,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="writing-files-for-processing-with-faster-python" class="level3">
 <h3 class="anchored" data-anchor-id="writing-files-for-processing-with-faster-python">Writing files for processing with faster python:</h3>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">write.csv</span>(pathogen_DRB1_1501, <span class="st">"C:/Users/lucio/Desktop/DTU stuff/Bachelor stuff/Bachelor Python stuff/pathogen_DRB1_1501.csv"</span>, <span class="at">row.names =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="fu">write.csv</span>(IEDB_DRB1_1501, <span class="st">"C:/Users/lucio/Desktop/DTU stuff/Bachelor stuff/Bachelor Python stuff/IEDB_DRB1_1501.csv"</span>, <span class="at">row.names =</span> <span class="cn">FALSE</span>)</span>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">write.csv</span>(pathogen_DRB1_1501, <span class="st">"./Python stuff/pathogen_DRB1_1501.csv"</span>, <span class="at">row.names =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="fu">write.csv</span>(IEDB_DRB1_1501, <span class="st">"./Python stuff/IEDB_DRB1_1501.csv"</span>, <span class="at">row.names =</span> <span class="cn">FALSE</span>)</span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="fu">write.csv</span>(pathogen_DRB1_0401, <span class="st">"C:/Users/lucio/Desktop/DTU stuff/Bachelor stuff/Bachelor Python stuff/pathogen_DRB1_0401.csv"</span>, <span class="at">row.names =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="fu">write.csv</span>(IEDB_DRB1_0401, <span class="st">"C:/Users/lucio/Desktop/DTU stuff/Bachelor stuff/Bachelor Python stuff/IEDB_DRB1_0401.csv"</span>, <span class="at">row.names =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="fu">write.csv</span>(pathogen_DRB1_0401, <span class="st">"./Python stuff/pathogen_DRB1_0401.csv"</span>, <span class="at">row.names =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="fu">write.csv</span>(IEDB_DRB1_0401, <span class="st">"./Python stuff/IEDB_DRB1_0401.csv"</span>, <span class="at">row.names =</span> <span class="cn">FALSE</span>)</span>
 <span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a><span class="fu">write.csv</span>(pathogen_DRB5_0101, <span class="st">"C:/Users/lucio/Desktop/DTU stuff/Bachelor stuff/Bachelor Python stuff/pathogen_DRB5_0101.csv"</span>, <span class="at">row.names =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a><span class="fu">write.csv</span>(IEDB_DRB5_0101, <span class="st">"C:/Users/lucio/Desktop/DTU stuff/Bachelor stuff/Bachelor Python stuff/IEDB_DRB5_0101.csv"</span>, <span class="at">row.names =</span> <span class="cn">FALSE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a><span class="fu">write.csv</span>(pathogen_DRB5_0101, <span class="st">"./Python stuff/pathogen_DRB5_0101.csv"</span>, <span class="at">row.names =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a><span class="fu">write.csv</span>(IEDB_DRB5_0101, <span class="st">"./Python stuff/IEDB_DRB5_0101.csv"</span>, <span class="at">row.names =</span> <span class="cn">FALSE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
 <section id="displaying-the-python-results" class="level3">
@@ -299,15 +299,52 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 6 P27958       KGGRKPARLIVFPDLGV…     117034 LFIAAFV…     92.6     100   multip…
 # ℹ 1 more variable: Epitope_Protein &lt;chr&gt;</code></pre>
 </div>
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">write.csv</span>(all_similarities_significants, <span class="st">"./Python stuff/similarity_matrix.csv"</span>, <span class="at">row.names =</span> <span class="cn">FALSE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="viewing-organisms-most-responsible" class="level3">
+<h3 class="anchored" data-anchor-id="viewing-organisms-most-responsible">Viewing organisms most responsible:</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>similarity_with_organism <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"./Data/similarity_matrix_with_organism.csv"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Rows: 2484 Columns: 10
+── Column specification ────────────────────────────────────────────────────────
+Delimiter: ","
+chr (7): Pathogen_pep, Pathogen_seq, IEDB_seq, Disease, Epitope_Protein, Uni...
+dbl (3): Epitope_ID, core_sim, tcore_sim
+
+ℹ Use `spec()` to retrieve the full column specification for this data.
+ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>similarity_with_organism <span class="sc">|&gt;</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(<span class="st">`</span><span class="at">Organism Source</span><span class="st">`</span>) <span class="sc">|&gt;</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">amount =</span> <span class="fu">n</span>()) <span class="sc">|&gt;</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(amount))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 35 × 2
+   `Organism Source`                                                      amount
+   &lt;chr&gt;                                                                   &lt;int&gt;
+ 1 Severe acute respiratory syndrome coronavirus 2                           603
+ 2 Mycobacterium tuberculosis (strain ATCC 25618 / H37Rv)                    485
+ 3 &lt;NA&gt;                                                                      263
+ 4 Hepatitis C virus genotype 1a (isolate H77)                               210
+ 5 Dengue virus type 1 (strain Nauru/West Pac/1974)                          203
+ 6 Borreliella burgdorferi (strain ATCC 35210 / DSM 4680 / CIP 102532 / …    186
+ 7 Zika virus                                                                124
+ 8 Mycobacterium leprae (strain TN)                                           91
+ 9 West Nile virus (strain NY-99)                                             56
+10 Hepatitis B virus genotype C subtype ayr (isolate Human/Japan/Okamoto…     45
+# ℹ 25 more rows</code></pre>
+</div>
 </div>
 </section>
 <section id="looking-at-what-mhc-alleles-got-caught-in-anchor-filtering" class="level3">
 <h3 class="anchored" data-anchor-id="looking-at-what-mhc-alleles-got-caught-in-anchor-filtering">Looking at what MHC alleles got caught in anchor filtering:</h3>
 <p>should match allele or be class II</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>IEDB_DRB1_0401 <span class="sc">|&gt;</span></span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(MHC_Allele) <span class="sc">|&gt;</span></span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="fu">n</span>())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>IEDB_DRB1_0401 <span class="sc">|&gt;</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(MHC_Allele) <span class="sc">|&gt;</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="fu">n</span>())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 3 × 2
   MHC_Allele               `n()`
@@ -316,9 +353,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 2 HLA-DRA*01:01/DRB1*04:01    20
 3 HLA-DRB1*04:01             142</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>IEDB_DRB1_1501 <span class="sc">|&gt;</span></span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(MHC_Allele) <span class="sc">|&gt;</span></span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="fu">n</span>())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>IEDB_DRB1_1501 <span class="sc">|&gt;</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(MHC_Allele) <span class="sc">|&gt;</span></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="fu">n</span>())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 3 × 2
   MHC_Allele               `n()`
@@ -327,9 +364,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 2 HLA-DRA*01:01/DRB1*15:01    10
 3 HLA-DRB1*15:01             164</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>IEDB_DRB5_0101 <span class="sc">|&gt;</span></span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(MHC_Allele) <span class="sc">|&gt;</span></span>
-<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="fu">n</span>())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>IEDB_DRB5_0101 <span class="sc">|&gt;</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(MHC_Allele) <span class="sc">|&gt;</span></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="fu">n</span>())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 3 × 2
   MHC_Allele               `n()`
@@ -345,11 +382,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>using mmseqs and the IEDB_infectius_peptides.fsa, we cluster based on sequence similarity using a minimum sequence identity of 70% and a 80% alignment coverage</p>
 <p>The discovery from this .fsa file was, that the sequences that had the same accession name was clustered together (which makes sense). Therefore we will simply take the original fasta, group them and pick 1 representative. This will reduce the amount of peptides we need to compare to our known autoimmune epitopes, allowing for faster computing.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="ex">mmseqs</span> createdb unique_IEDB_infectius_peptides.fsa infectius_peptides_DB</span>
-<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a><span class="ex">mmseqs</span> cluster infectius_peptides_DB infectius_cluster tmp</span>
-<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a><span class="ex">mmseqs</span> createtsv infectius_peptides_DB infectius_peptides_DB infectius_cluster infectius_cluster.tsv</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="ex">mmseqs</span> createdb unique_IEDB_infectius_peptides.fsa infectius_peptides_DB</span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a><span class="ex">mmseqs</span> cluster infectius_peptides_DB infectius_cluster tmp</span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a><span class="ex">mmseqs</span> createtsv infectius_peptides_DB infectius_peptides_DB infectius_cluster infectius_cluster.tsv</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
 </section>

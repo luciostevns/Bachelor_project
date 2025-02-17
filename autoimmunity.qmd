@@ -116,10 +116,10 @@ autoimmune_data <- autoimmune_data |>
   ) |>
   unique()
 
-# Looking a MHC allele distrubution
+# Find MHC restriction for epitopes to look into.
 autoimmune_data |>
   group_by(MHC_Allele) |>
-  summarise(amount = n()) |>
+  summarise(amount = n(), .groups = "drop") |>
   arrange(desc(amount))
 ```
 
@@ -210,6 +210,19 @@ all_similarities_significants <- bind_rows(similarity_results_DRB1_1501,
   unique()
 
 head(all_similarities_significants)
+
+write.csv(all_similarities_significants, "./Python stuff/similarity_matrix.csv", row.names = FALSE)
+```
+
+### Viewing organisms most responsible:
+
+```{r}
+similarity_with_organism <- read_csv("./Data/similarity_matrix_with_organism.csv")
+
+similarity_with_organism |>
+  group_by(`Organism Source`) |>
+  summarise(amount = n()) |>
+  arrange(desc(amount))
 ```
 
 ### Looking at what MHC alleles got caught in anchor filtering:
