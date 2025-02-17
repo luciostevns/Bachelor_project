@@ -1,48 +1,5 @@
-# Define the write_fasta function
-write_fasta <- function(target_allele, df, id_col, seq_col, file_path) {
-  # Open a file connection
-  con <- file(file_path, "w")
-  
-  # Create FASTA entries
-  fasta_entries <- df |>
-    filter(str_detect(MHC_Allele, target_allele)) |>  
-    group_by(Epitope) |>
-    slice_head(n = 1) |>
-    ungroup() |>
-    rowwise() |>  # Ensure row-wise operation
-    mutate(fasta_entry = paste0(">", !!sym(id_col), "\n", !!sym(seq_col))) |> 
-    pull(fasta_entry)
-  
-  # Write to file
-  writeLines(fasta_entries, con)
-  
-  # Close the file connection
-  close(con)
-}
-
-cross_reactive_test <- function(percent_identity, autoimmune_data, pathogen_df, target_allele){
-  # Running similarity check with % acceptable errors on our now filtered proteome data
-  cross_reactive_results <- autoimmune_data |>
-    mutate(matches = map(Epitope, ~{
-      peptide_length <- nchar(.x)  # Get peptide length
-      max_mismatch <- round(peptide_length * (1 - percent_identity/100))  # Compute max mismatches
-      
-      matched_indices <- which(vcountPattern(pattern = .x, 
-                                             subject = pathogen_df$sequence,
-                                             max.mismatch = max_mismatch,
-                                             with.indels = TRUE) > 0)
-      list(Pathogen_ID = pathogen_df$header[matched_indices],
-           count = length(matched_indices))
-    })) |>
-    unnest_wider(matches) |>
-    filter(count >= 1) |>
-    arrange(desc(count)) |>
-    mutate(Pathogen_ID = map(Pathogen_ID, unique)) |>
-    unnest(Pathogen_ID) |>
-    mutate(Pathogen_ID = as.character(Pathogen_ID))
-  
-  return(cross_reactive_results)
-}
+############################################################################################################################
+# Function that takes in a MHC allele and outputs the logo plot for it
 
 MHC_motif_finder <- function(MHC_allele_pattern){
   
@@ -58,4 +15,20 @@ MHC_motif_finder <- function(MHC_allele_pattern){
   pdf_img <- image_read_pdf(pdf_location)
   
   return(pdf_img)
+}
+
+############################################################################################################################
+# Filters sequences based on a given MHC allele anchor points, 
+# and finds the binding core along with possible site of TCR binding
+
+Allele_filterer <- function(df, allele_pattern, TCR_bind_pos){
+  
+  df_filtered <- df |>
+    filter(str_detect(Seq, allele_pattern)) |>
+    rowwise() |>
+    mutate(start_index = str_locate(Seq, allele_pattern)[1]) |>
+    mutate(core = substring(Seq,start_index,start_index+8)) |>
+    mutate(TCR_bind_core = paste0(strsplit(core, "")[[1]][TCR_bind_pos],
+                                  collapse = "")) |>
+    ungroup()
 }

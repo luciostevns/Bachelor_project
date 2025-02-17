@@ -106,7 +106,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="method" class="level2">
 <h2 class="anchored" data-anchor-id="method">Method</h2>
 <p>Using IEDB i will find the epitopes that are found to be associated with all autoimmune diseases in humans.</p>
-<p>The following filters where applied: “Epitope Structure”, “Include Positive Assays”, “MHC Restriction Type: Class II”, “Host: Homo Sapiens (Human)”, “Disease Data: Autoimmune Disease”, “No T cell assays” and “No B cell assays”.</p>
+<p>The following filters where applied: “Epitope Structure”, “Include Positive Assays”, “MHC Restriction Type: Class II”, “Host: Homo Sapiens (Human)”, “Disease Data: Autoimmune Disease”, “No MHC cell assays” and “No B cell assays”, “Organism Source: Human”.</p>
 <p>These filters will ensure that I get only Linear MHC class II epitopes, that is found only with MHC assays, meaning that i will be able to find to MHC allele that was used. This will allow me to find the binding core, using netpanMHCII. and then find the anchor positions on the peptides. With the found anchor positions we can now weigh the conservation of this position more, allowing for more accurate cross-reactivity check.</p>
 <p>This Returned ~? epitopes for analyzation.</p>
 <section id="libraries" class="level3">
@@ -117,7 +117,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(<span class="st">"ggseqlogo"</span>)</span>
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(<span class="st">"biomaRt"</span>)</span>
 <span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(<span class="st">"pdftools"</span>)</span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(<span class="st">"magick"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(<span class="st">"magick"</span>)</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(<span class="st">"httr"</span>)</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(<span class="st">"jsonlite"</span>)</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(<span class="st">"stringdist"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
 <section id="data-import" class="level3">
@@ -138,244 +141,215 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>pathogen_fasta <span class="ot">&lt;-</span> <span class="fu">readAAStringSet</span>(<span class="st">"./Data/IEDB_infectius_peptides.fsa"</span>,)</span>
 <span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Clustered bacteria proteome dataset using mmseq2</span></span>
-<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>pathogen_clusters <span class="ot">&lt;-</span> <span class="fu">read_tsv</span>(<span class="st">"./Data/infectius_cluster.tsv"</span>, <span class="at">col_names =</span> <span class="fu">c</span>(<span class="st">"cluster_ID"</span>, <span class="st">"member_ID"</span>))</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a><span class="co">#pathogen_clusters &lt;- read_tsv("./Data/infectius_cluster.tsv", col_names = c("cluster_ID", "member_ID"))</span></span>
 <span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a><span class="co"># From NetMHCIIpan containing information about binding core</span></span>
-<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>DRB5_0101_NetMHCIIpan <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"./Data/DRB5_0101_NetMHCIIpan.csv"</span>, <span class="at">skip =</span> <span class="dv">1</span>, <span class="at">col_names =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>DRB1_1501_NetMHCIIpan <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"./Data/DRB1_1501_NetMHCIIpan.csv"</span>, <span class="at">skip =</span> <span class="dv">1</span>, <span class="at">col_names =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>DRB1_0401_NetMHCIIpan <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"./Data/DRB1_0401_NetMHCIIpan.csv"</span>, <span class="at">skip =</span> <span class="dv">1</span>, <span class="at">col_names =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a><span class="co"># Experimentally verifiyed pathogenic peptides causing autoimmune diseases</span></span>
-<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>exp_verified_patho_peps <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"./Data/Exp_verified_pathogenic_peptides.txt"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a><span class="co"># Experimentally verifiyed pathogenic peptides causing autoimmune diseases</span></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>exp_verified_patho_peps <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"./Data/Exp_verified_pathogenic_peptides.txt"</span>)</span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>exp_verified_prot_annot <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"./Data/temp_prot_annot_verified.csv"</span>)</span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>exp_verified_patho_peps <span class="ot">&lt;-</span> <span class="fu">left_join</span>(exp_verified_patho_peps, exp_verified_prot_annot, <span class="at">by =</span> <span class="st">"ID"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="st">"Protein"</span> <span class="ot">=</span> <span class="st">"Pathogen_pep"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(Pathogen_pep))</span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a><span class="co"># Removing elements no longer needed</span></span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(headers)</span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(new_col_names)</span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(exp_verified_prot_annot)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
-<section id="wrangling-iedb-tables-for-netmhciipan" class="level3">
-<h3 class="anchored" data-anchor-id="wrangling-iedb-tables-for-netmhciipan">Wrangling IEDB tables for netMHCIIpan</h3>
+<section id="wrangling-iedb-tables" class="level3">
+<h3 class="anchored" data-anchor-id="wrangling-iedb-tables">Wrangling IEDB tables</h3>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>known_diseases <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">'multiple sclerosis'</span>,<span class="st">"type 1 diabetes mellitus"</span>, <span class="st">"rheumatoid arthritis"</span>, <span class="st">"myasthenia gravis"</span>,<span class="st">"systemic lupus erythematosus"</span>, <span class="st">"Graves' disease, Graves disease"</span>, <span class="st">"autoimmune hemolytic anemia"</span>, <span class="st">"psoriasis"</span>, <span class="st">"autoimmune uveitis"</span>, <span class="st">"autoimmune thyroiditis"</span>, <span class="st">"vitiligo"</span>, <span class="st">"alopecia areata"</span>, <span class="st">"Vogt-Koyanagi-Harada disease"</span>, <span class="st">"Goodpasture syndrome"</span>, <span class="st">"Behcet's disease"</span>, <span class="st">'systemic lupus erythematosus'</span>, <span class="st">'neuromyelitis optica'</span>, <span class="st">'primary biliary cholangitis'</span>, <span class="st">'autoimmune hepatitis'</span>, <span class="st">'autoimmune vasculitis'</span>, <span class="st">'pemphigus'</span>,<span class="st">"Sjogren's syndrome"</span>)</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Tidying data and filtering with relevant filters</span></span>
 <span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>autoimmune_data <span class="ot">&lt;-</span> autoimmune_data <span class="sc">|&gt;</span></span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="st">`</span><span class="at">Epitope_Source Organism</span><span class="st">`</span> <span class="sc">==</span> <span class="st">"Homo sapiens"</span>) <span class="sc">|&gt;</span> <span class="co"># Remove this and add filter in IEDB</span></span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="fu">is.na</span>(<span class="st">`</span><span class="at">Epitope_Modified residues</span><span class="st">`</span>)) <span class="sc">|&gt;</span></span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">rename</span>(<span class="st">"Assay_ID"</span> <span class="ot">=</span> <span class="st">"Assay ID_IEDB IRI"</span>,</span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>                <span class="st">"Epitope_ID"</span> <span class="ot">=</span> <span class="st">"Epitope_IEDB IRI"</span>,</span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>                <span class="st">"Epitope"</span> <span class="ot">=</span> <span class="st">"Epitope_Name"</span>,</span>
-<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>                <span class="st">"Epitope_Protein"</span> <span class="ot">=</span> <span class="st">"Epitope_Molecule Parent"</span>,</span>
-<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>                <span class="st">"Epitope_Protein_annot"</span> <span class="ot">=</span> <span class="st">"Epitope_Molecule Parent IRI"</span>,</span>
-<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>                <span class="st">"Disease"</span> <span class="ot">=</span> <span class="st">"1st in vivo Process_Disease"</span>,</span>
-<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>                <span class="st">"MHC_Allele"</span> <span class="ot">=</span> <span class="st">"MHC Restriction_Name"</span>) <span class="sc">|&gt;</span></span>
-<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">Epitope =</span> <span class="fu">str_trim</span>(<span class="fu">str_replace</span>(Epitope, <span class="st">"</span><span class="sc">\\</span><span class="st">+.*"</span>, <span class="st">""</span>)),</span>
-<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>         <span class="at">Assay_ID =</span> <span class="fu">as.integer</span>(<span class="fu">str_trim</span>(<span class="fu">str_extract</span>(Assay_ID, <span class="st">"</span><span class="sc">\\</span><span class="st">d+$"</span>))),</span>
-<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>         <span class="at">Epitope_ID =</span> <span class="fu">as.integer</span>(<span class="fu">str_trim</span>(<span class="fu">str_extract</span>(Epitope_ID, <span class="st">"</span><span class="sc">\\</span><span class="st">d+$"</span>))),</span>
-<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>         <span class="at">Epitope_Protein_annot =</span> <span class="fu">str_trim</span>(<span class="fu">str_extract</span>(Epitope_Protein_annot, <span class="st">"(?&lt;=/)[^/]+$"</span>))) <span class="sc">|&gt;</span></span>
-<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">select</span>(Assay_ID, Epitope_ID, Epitope, Epitope_Protein, Epitope_Protein_annot, Disease, MHC_Allele) <span class="sc">|&gt;</span></span>
-<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="fu">str_length</span>(Epitope) <span class="sc">&gt;</span> <span class="dv">12</span> <span class="sc">&amp;</span> <span class="fu">str_length</span>(Epitope) <span class="sc">&lt;</span> <span class="dv">26</span>) <span class="sc">|&gt;</span></span>
-<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(MHC_Allele) <span class="sc">&amp;</span> <span class="sc">!</span><span class="fu">is.na</span>(Epitope)) <span class="sc">|&gt;</span> <span class="fu">filter</span>(<span class="fu">str_detect</span>(Epitope, <span class="st">"^[ACDEFGHIKLMNPQRSTVWY]+$"</span>)) <span class="sc">|&gt;</span></span>
-<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(Disease <span class="sc">%in%</span> known_diseases) <span class="sc">|&gt;</span></span>
-<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unique</span>()</span>
-<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>autoimmune_data <span class="sc">|&gt;</span></span>
-<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(MHC_Allele) <span class="sc">|&gt;</span></span>
-<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">amount =</span> <span class="fu">n</span>()) <span class="sc">|&gt;</span></span>
-<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(amount))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">rename</span>(</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">Assay_ID =</span> <span class="st">"Assay ID_IEDB IRI"</span>,</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">Epitope_ID =</span> <span class="st">"Epitope_IEDB IRI"</span>,</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">Seq =</span> <span class="st">"Epitope_Name"</span>,</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">Epitope_Protein =</span> <span class="st">"Epitope_Molecule Parent"</span>,</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">Epitope_Protein_annot =</span> <span class="st">"Epitope_Molecule Parent IRI"</span>,</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">Disease =</span> <span class="st">"1st in vivo Process_Disease"</span>,</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">MHC_Allele =</span> <span class="st">"MHC Restriction_Name"</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">Seq =</span> <span class="fu">str_trim</span>(<span class="fu">str_replace</span>(Seq, <span class="st">"</span><span class="sc">\\</span><span class="st">+.*"</span>, <span class="st">""</span>)),</span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">Assay_ID =</span> <span class="fu">as.integer</span>(<span class="fu">str_extract</span>(Assay_ID, <span class="st">"</span><span class="sc">\\</span><span class="st">d+$"</span>)),</span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">Epitope_ID =</span> <span class="fu">as.integer</span>(<span class="fu">str_extract</span>(Epitope_ID, <span class="st">"</span><span class="sc">\\</span><span class="st">d+$"</span>)),</span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">Epitope_Protein_annot =</span> <span class="fu">str_extract</span>(Epitope_Protein_annot, <span class="st">"(?&lt;=/)[^/]+$"</span>)</span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(</span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>    <span class="fu">is.na</span>(<span class="st">`</span><span class="at">Epitope_Modified residues</span><span class="st">`</span>),</span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>    <span class="fu">str_length</span>(Seq) <span class="sc">&gt;</span> <span class="dv">12</span> <span class="sc">&amp;</span> <span class="fu">str_length</span>(Seq) <span class="sc">&lt;</span> <span class="dv">26</span>,</span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>    <span class="sc">!</span><span class="fu">is.na</span>(MHC_Allele) <span class="sc">&amp;</span> <span class="sc">!</span><span class="fu">is.na</span>(Seq),</span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>    <span class="fu">str_detect</span>(Seq, <span class="st">"^[ACDEFGHIKLMNPQRSTVWY]+$"</span>),</span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a>    Disease <span class="sc">%in%</span> known_diseases,</span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a>    <span class="sc">!</span>(<span class="fu">str_detect</span>(Epitope_Protein, <span class="st">"T cell"</span>) <span class="sc">|</span> <span class="fu">str_detect</span>(Epitope_Protein, <span class="st">"Immunoglobulin"</span>))</span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">select</span>(</span>
+<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a>    Assay_ID, Epitope_ID, Seq, Epitope_Protein,</span>
+<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a>    Epitope_Protein_annot, Disease, MHC_Allele</span>
+<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unique</span>()</span>
+<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a><span class="co"># Looking a MHC allele distrubution</span></span>
+<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a>autoimmune_data <span class="sc">|&gt;</span></span>
+<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(MHC_Allele) <span class="sc">|&gt;</span></span>
+<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">amount =</span> <span class="fu">n</span>()) <span class="sc">|&gt;</span></span>
+<span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(amount))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 71 × 2
    MHC_Allele                amount
    &lt;chr&gt;                      &lt;int&gt;
- 1 HLA class II                1732
- 2 HLA-DR                       239
- 3 HLA-DRB1*04:01               234
- 4 HLA-DRB1*15:01               213
- 5 HLA-DR4                      144
- 6 HLA-DQA1*03:01/DQB1*03:02    120
- 7 HLA-DRB4*01:01                57
- 8 HLA-DRA*01:01/DRB1*04:01      50
- 9 HLA-DR15                      49
-10 HLA-DR7                       48
+ 1 HLA class II                1676
+ 2 HLA-DR                       264
+ 3 HLA-DRB1*15:01               246
+ 4 HLA-DRB1*04:01               233
+ 5 HLA-DR4                      154
+ 6 HLA-DQA1*03:01/DQB1*03:02    112
+ 7 HLA-DRB4*01:01                60
+ 8 HLA-DR53                      58
+ 9 HLA-DRA*01:01/DRB1*04:01      51
+10 HLA-DR15                      49
 # ℹ 61 more rows</code></pre>
 </div>
 </div>
 </section>
-<section id="writing-fastas" class="level3">
-<h3 class="anchored" data-anchor-id="writing-fastas">Writing fastas:</h3>
+<section id="looking-at-anchorpoints-for-mhc-alleles-from-netmhciipan" class="level3">
+<h3 class="anchored" data-anchor-id="looking-at-anchorpoints-for-mhc-alleles-from-netmhciipan">Looking at anchorpoints for MHC alleles from netMHCIIpan</h3>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Write fasta file for netMHCIIpan for the chosen allele of interest</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="fu">write_fasta</span>(<span class="st">"HLA-DRB5</span><span class="sc">\\</span><span class="st">*01:01"</span>, autoimmune_data, <span class="st">"Assay_ID"</span>, <span class="st">"Epitope"</span>, <span class="st">"./Data/DRB5_0101.fasta"</span>)</span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="fu">write_fasta</span>(<span class="st">"HLA-DRB1</span><span class="sc">\\</span><span class="st">*15:01"</span>, autoimmune_data, <span class="st">"Assay_ID"</span>, <span class="st">"Epitope"</span>, <span class="st">"./Data/DRB1_1501.fasta"</span>)</span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="fu">write_fasta</span>(<span class="st">"HLA-DRB1</span><span class="sc">\\</span><span class="st">*04:01"</span>, autoimmune_data, <span class="st">"Assay_ID"</span>, <span class="st">"Epitope"</span>, <span class="st">"./Data/DRB1_0401.fasta"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>DRB1_0401_motifs <span class="ot">&lt;-</span> <span class="fu">MHC_motif_finder</span>(<span class="st">"DRB1_0401"</span>)</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>DRB1_1501_motifs <span class="ot">&lt;-</span> <span class="fu">MHC_motif_finder</span>(<span class="st">"DRB1_1501"</span>)</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>DRB5_0101_motifs <span class="ot">&lt;-</span> <span class="fu">MHC_motif_finder</span>(<span class="st">"DRB5_0101"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
-<section id="netmhciipan-output-wrangling-and-decision-of-anchorpoints" class="level3">
-<h3 class="anchored" data-anchor-id="netmhciipan-output-wrangling-and-decision-of-anchorpoints">NetMHCIIpan output wrangling and decision of anchorpoints:</h3>
-<p>based on www.syfpeithi.de we found that typical anchorpoints for DRB5_0101 are</p>
-<ul>
-<li><p>P1: F, Y, L, M</p></li>
-<li><p>P4: Q, V, I, M</p></li>
-<li><p>P9: R, K</p>
-<p>We can therefore decide to check cross-reactivity based on this or look at our peptides that was binder found through NetMHCIIpan by a logoplot.</p></li>
-</ul>
+<section id="tidying-pathogen-proteome-data-and-filtering-for-mhc-alleles-and-obtaining-binding-core" class="level3">
+<h3 class="anchored" data-anchor-id="tidying-pathogen-proteome-data-and-filtering-for-mhc-alleles-and-obtaining-binding-core">Tidying pathogen proteome data and filtering for MHC alleles and obtaining binding core:</h3>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>DRB1_0401_motifs <span class="ot">&lt;-</span> <span class="fu">MHC_motif_finder</span>(<span class="st">"DRB1_0401"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Rows: 7320 Columns: 2
-── Column specification ────────────────────────────────────────────────────────
-Delimiter: " "
-chr (2): filename, MHC_allele
-
-ℹ Use `spec()` to retrieve the full column specification for this data.
-ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Making the pathogen proteome fastafile to a dataframe</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>pathogen_seqs <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">Pathogen_prot =</span> <span class="fu">names</span>(pathogen_fasta),</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">Seq =</span> <span class="fu">as.character</span>(pathogen_fasta)</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Filtering pathogen proteome based on the found anchors</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>pathogen_DRB5_0101 <span class="ot">&lt;-</span> <span class="fu">Allele_filterer</span>(pathogen_seqs, <span class="st">"[FYILV].{4}[ASGPN].{2}[KR]"</span>, <span class="fu">c</span>(<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">4</span>,<span class="dv">5</span>,<span class="dv">7</span>,<span class="dv">8</span>))</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>pathogen_DRB1_1501 <span class="ot">&lt;-</span> <span class="fu">Allele_filterer</span>(pathogen_seqs, <span class="st">"[ILV].{2}[YF].{1}[SNGDA].{2}[LVAI]"</span>, <span class="fu">c</span>(<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">5</span>,<span class="dv">7</span>,<span class="dv">8</span>))</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>pathogen_DRB1_0401 <span class="ot">&lt;-</span> <span class="fu">Allele_filterer</span>(pathogen_seqs, <span class="st">"[YFI].{2}[DEA].{1}[TNSDV].{2}[ASGQ]"</span>, <span class="fu">c</span>(<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">5</span>,<span class="dv">7</span>,<span class="dv">8</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>DRB1_1501_motifs <span class="ot">&lt;-</span> <span class="fu">MHC_motif_finder</span>(<span class="st">"DRB1_1501"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Rows: 7320 Columns: 2
-── Column specification ────────────────────────────────────────────────────────
-Delimiter: " "
-chr (2): filename, MHC_allele
-
-ℹ Use `spec()` to retrieve the full column specification for this data.
-ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+</section>
+<section id="filtering-iedb-data-for-mhc-restriction-and-obtaining-binding-core" class="level3">
+<h3 class="anchored" data-anchor-id="filtering-iedb-data-for-mhc-restriction-and-obtaining-binding-core">Filtering IEDB data for MHC restriction and obtaining binding core:</h3>
+<p>using less stringent anchorpoints and extra filters to capture most of the actual reported MHC restriction</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>IEDB_DRB5_0101 <span class="ot">&lt;-</span> <span class="fu">Allele_filterer</span>(autoimmune_data, <span class="st">"[FYILVW].{7}[KR]"</span>, <span class="fu">c</span>(<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">4</span>,<span class="dv">5</span>,<span class="dv">7</span>,<span class="dv">8</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="fu">str_detect</span>(MHC_Allele, <span class="st">"DRB5</span><span class="sc">\\</span><span class="st">*01:01"</span>) <span class="sc">|</span> MHC_Allele <span class="sc">==</span> <span class="st">"HLA class II"</span>)</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>IEDB_DRB1_1501 <span class="ot">&lt;-</span> <span class="fu">Allele_filterer</span>(autoimmune_data, <span class="st">"[ILV].{2}[YF].{5}"</span>, <span class="fu">c</span>(<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">5</span>,<span class="dv">7</span>,<span class="dv">8</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="fu">str_detect</span>(MHC_Allele, <span class="st">"DRB1</span><span class="sc">\\</span><span class="st">*15:01"</span>) <span class="sc">|</span> MHC_Allele <span class="sc">==</span> <span class="st">"HLA class II"</span>)</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>IEDB_DRB1_0401 <span class="ot">&lt;-</span> <span class="fu">Allele_filterer</span>(autoimmune_data, <span class="st">"[YFIW].{4}[TNSDV].{3}"</span>, <span class="fu">c</span>(<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">5</span>,<span class="dv">7</span>,<span class="dv">8</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="fu">str_detect</span>(MHC_Allele, <span class="st">"DRB1</span><span class="sc">\\</span><span class="st">*04:01"</span>) <span class="sc">|</span> MHC_Allele <span class="sc">==</span> <span class="st">"HLA class II"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>DRB5_0101_motifs <span class="ot">&lt;-</span> <span class="fu">MHC_motif_finder</span>(<span class="st">"DRB5_0101"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Rows: 7320 Columns: 2
-── Column specification ────────────────────────────────────────────────────────
-Delimiter: " "
-chr (2): filename, MHC_allele
-
-ℹ Use `spec()` to retrieve the full column specification for this data.
-ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+</section>
+<section id="section" class="level3">
+<h3 class="anchored" data-anchor-id="section"></h3>
+</section>
+<section id="writing-files-for-processing-with-faster-python" class="level3">
+<h3 class="anchored" data-anchor-id="writing-files-for-processing-with-faster-python">Writing files for processing with faster python:</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">write.csv</span>(pathogen_DRB1_1501, <span class="st">"C:/Users/lucio/Desktop/DTU stuff/Bachelor stuff/Bachelor Python stuff/pathogen_DRB1_1501.csv"</span>, <span class="at">row.names =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="fu">write.csv</span>(IEDB_DRB1_1501, <span class="st">"C:/Users/lucio/Desktop/DTU stuff/Bachelor stuff/Bachelor Python stuff/IEDB_DRB1_1501.csv"</span>, <span class="at">row.names =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="fu">write.csv</span>(pathogen_DRB1_0401, <span class="st">"C:/Users/lucio/Desktop/DTU stuff/Bachelor stuff/Bachelor Python stuff/pathogen_DRB1_0401.csv"</span>, <span class="at">row.names =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="fu">write.csv</span>(IEDB_DRB1_0401, <span class="st">"C:/Users/lucio/Desktop/DTU stuff/Bachelor stuff/Bachelor Python stuff/IEDB_DRB1_0401.csv"</span>, <span class="at">row.names =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a><span class="fu">write.csv</span>(pathogen_DRB5_0101, <span class="st">"C:/Users/lucio/Desktop/DTU stuff/Bachelor stuff/Bachelor Python stuff/pathogen_DRB5_0101.csv"</span>, <span class="at">row.names =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a><span class="fu">write.csv</span>(IEDB_DRB5_0101, <span class="st">"C:/Users/lucio/Desktop/DTU stuff/Bachelor stuff/Bachelor Python stuff/IEDB_DRB5_0101.csv"</span>, <span class="at">row.names =</span> <span class="cn">FALSE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="displaying-the-python-results" class="level3">
+<h3 class="anchored" data-anchor-id="displaying-the-python-results">Displaying the python results:</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>similarity_results_DRB1_1501 <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"./Data/similarity_results_DRB1_1501.csv"</span>)</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>similarity_results_DRB1_0401 <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"./Data/similarity_results_DRB1_0401.csv"</span>)</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>similarity_results_DRB5_0101 <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"./Data/similarity_results_DRB5_0101.csv"</span>)</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>all_similarities_significants <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(similarity_results_DRB1_1501,</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>                                           similarity_results_DRB1_0401,</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>                                           similarity_results_DRB5_0101) <span class="sc">|&gt;</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(dplyr<span class="sc">::</span><span class="fu">select</span>(autoimmune_data, Epitope_ID, Disease, Epitope_Protein),</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>            <span class="at">by =</span> <span class="st">"Epitope_ID"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unique</span>()</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(all_similarities_significants)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 6 × 8
+  Pathogen_pep Pathogen_seq       Epitope_ID IEDB_seq core_sim tcore_sim Disease
+  &lt;chr&gt;        &lt;chr&gt;                   &lt;dbl&gt; &lt;chr&gt;       &lt;dbl&gt;     &lt;dbl&gt; &lt;chr&gt;  
+1 P0CD83       AINRYLKRKGKVWIRVF…     122346 FEVKAFA…     88.9      93.3 autoim…
+2 P27958       AKVLVVLLLFAGVDAET…     119560 DLVLYNN…     88.9      93.3 myasth…
+3 P27958       AKVLVVLLLFAGVDAET…     119868 FMVNLVF…     88.9      93.3 myasth…
+4 P46841       GTNQASDRTYLVTLYTS…     122479 LTFRRDL…     92.6      93.3 autoim…
+5 P46841       GTNQASDRTYLVTLYTS…     566648 YEYLINV…     81.5      93.3 multip…
+6 P27958       KGGRKPARLIVFPDLGV…     117034 LFIAAFV…     92.6     100   multip…
+# ℹ 1 more variable: Epitope_Protein &lt;chr&gt;</code></pre>
+</div>
+</div>
+</section>
+<section id="looking-at-what-mhc-alleles-got-caught-in-anchor-filtering" class="level3">
+<h3 class="anchored" data-anchor-id="looking-at-what-mhc-alleles-got-caught-in-anchor-filtering">Looking at what MHC alleles got caught in anchor filtering:</h3>
+<p>should match allele or be class II</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>IEDB_DRB1_0401 <span class="sc">|&gt;</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(MHC_Allele) <span class="sc">|&gt;</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="fu">n</span>())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 3 × 2
+  MHC_Allele               `n()`
+  &lt;chr&gt;                    &lt;int&gt;
+1 HLA class II               638
+2 HLA-DRA*01:01/DRB1*04:01    20
+3 HLA-DRB1*04:01             142</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>IEDB_DRB1_1501 <span class="sc">|&gt;</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(MHC_Allele) <span class="sc">|&gt;</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="fu">n</span>())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 3 × 2
+  MHC_Allele               `n()`
+  &lt;chr&gt;                    &lt;int&gt;
+1 HLA class II               269
+2 HLA-DRA*01:01/DRB1*15:01    10
+3 HLA-DRB1*15:01             164</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>IEDB_DRB5_0101 <span class="sc">|&gt;</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(MHC_Allele) <span class="sc">|&gt;</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="fu">n</span>())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 3 × 2
+  MHC_Allele               `n()`
+  &lt;chr&gt;                    &lt;int&gt;
+1 HLA class II               553
+2 HLA-DRA*01:01/DRB5*01:01     1
+3 HLA-DRB5*01:01              31</code></pre>
 </div>
 </div>
 </section>
 <section id="cluster-wrangeling-using-mmseqs2" class="level3">
 <h3 class="anchored" data-anchor-id="cluster-wrangeling-using-mmseqs2">Cluster wrangeling using mmseqs2:</h3>
 <p>using mmseqs and the IEDB_infectius_peptides.fsa, we cluster based on sequence similarity using a minimum sequence identity of 70% and a 80% alignment coverage</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="ex">mmseqs</span> createdb unique_IEDB_infectius_peptides.fsa infectius_peptides_DB</span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="ex">mmseqs</span> cluster infectius_peptides_DB infectius_cluster tmp</span>
-<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a><span class="ex">mmseqs</span> createtsv infectius_peptides_DB infectius_peptides_DB infectius_cluster infectius_cluster.tsv</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
 <p>The discovery from this .fsa file was, that the sequences that had the same accession name was clustered together (which makes sense). Therefore we will simply take the original fasta, group them and pick 1 representative. This will reduce the amount of peptides we need to compare to our known autoimmune epitopes, allowing for faster computing.</p>
-</section>
-<section id="tidying-pathogen-proteome-data" class="level3">
-<h3 class="anchored" data-anchor-id="tidying-pathogen-proteome-data">Tidying pathogen proteome data</h3>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Making the pathogen proteome fastafile to a dataframe</span></span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>pathogen_seqs <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">header =</span> <span class="fu">names</span>(pathogen_fasta),</span>
-<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">sequence =</span> <span class="fu">as.character</span>(pathogen_fasta)</span>
-<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Filtering pathogen proteome based on the found anchors</span></span>
-<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>pathogen_seqs_DRB5_0101 <span class="ot">&lt;-</span> pathogen_seqs <span class="sc">|&gt;</span></span>
-<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="fu">str_detect</span>(sequence, <span class="st">"[FYILVW].{2}[ALIVEQ].{1}[ASGPNI].{2}[KR]"</span>))</span>
-<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>pathogen_seqs_DRB1_1501 <span class="ot">&lt;-</span> pathogen_seqs <span class="sc">|&gt;</span></span>
-<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="fu">str_detect</span>(sequence, <span class="st">"[ILVM].{2}[YFW].{1}[SNGDA].{2}[LVAI]"</span>))</span>
-<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>pathogen_seqs_DRB1_0401 <span class="ot">&lt;-</span> pathogen_seqs <span class="sc">|&gt;</span></span>
-<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="fu">str_detect</span>(sequence, <span class="st">"[YFIW].{2}[DEAQM].{1}[TNSDV].{2}[ASGQ]"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-</section>
-<section id="checking-for-cross-reactivity" class="level3">
-<h3 class="anchored" data-anchor-id="checking-for-cross-reactivity">Checking for cross-reactivity:</h3>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>percent_identity <span class="ot">&lt;-</span> <span class="dv">50</span></span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Running cross reactivity test</span></span>
-<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>DRB5_0101_results <span class="ot">&lt;-</span> <span class="fu">cross_reactive_test</span>(<span class="dv">50</span>, autoimmune_data, pathogen_seqs_DRB5_0101, </span>
-<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>                      <span class="st">"HLA-DRB5</span><span class="sc">\\</span><span class="st">*01:01"</span>)</span>
-<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>DRB1_1501_results <span class="ot">&lt;-</span> <span class="fu">cross_reactive_test</span>(<span class="dv">50</span>, autoimmune_data, pathogen_seqs_DRB1_1501, </span>
-<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>                      <span class="st">"HLA-DRB1</span><span class="sc">\\</span><span class="st">*15:01"</span>)</span>
-<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>DRB1_0401_results <span class="ot">&lt;-</span> <span class="fu">cross_reactive_test</span>(<span class="dv">50</span>, autoimmune_data, pathogen_seqs_DRB1_0401, </span>
-<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>                      <span class="st">"HLA-DRB1</span><span class="sc">\\</span><span class="st">*04:01"</span>)</span>
-<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>DRB5_0101_results</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code># A tibble: 589 × 9
-   Assay_ID Epitope_ID Epitope     Epitope_Protein Epitope_Protein_annot Disease
-      &lt;int&gt;      &lt;int&gt; &lt;chr&gt;       &lt;chr&gt;           &lt;chr&gt;                 &lt;chr&gt;  
- 1  6362764     172668 PILRGLMATP… Myeloperoxidase P05164                autoim…
- 2  6362764     172668 PILRGLMATP… Myeloperoxidase P05164                autoim…
- 3  6362764     172668 PILRGLMATP… Myeloperoxidase P05164                autoim…
- 4  6362764     172668 PILRGLMATP… Myeloperoxidase P05164                autoim…
- 5  6362764     172668 PILRGLMATP… Myeloperoxidase P05164                autoim…
- 6  6362764     172668 PILRGLMATP… Myeloperoxidase P05164                autoim…
- 7  6362765     172668 PILRGLMATP… Myeloperoxidase P05164                autoim…
- 8  6362765     172668 PILRGLMATP… Myeloperoxidase P05164                autoim…
- 9  6362765     172668 PILRGLMATP… Myeloperoxidase P05164                autoim…
-10  6362765     172668 PILRGLMATP… Myeloperoxidase P05164                autoim…
-# ℹ 579 more rows
-# ℹ 3 more variables: MHC_Allele &lt;chr&gt;, Pathogen_ID &lt;chr&gt;, count &lt;int&gt;</code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>DRB1_1501_results</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code># A tibble: 359 × 9
-   Assay_ID Epitope_ID Epitope     Epitope_Protein Epitope_Protein_annot Disease
-      &lt;int&gt;      &lt;int&gt; &lt;chr&gt;       &lt;chr&gt;           &lt;chr&gt;                 &lt;chr&gt;  
- 1  1823446     122635 VKRISGLIYE… Histone H4      P62805                system…
- 2  1823446     122635 VKRISGLIYE… Histone H4      P62805                system…
- 3  1823446     122635 VKRISGLIYE… Histone H4      P62805                system…
- 4  1651002     110599 GIPGAKGSAG… Collagen alpha… P02458                rheuma…
- 5  1651002     110599 GIPGAKGSAG… Collagen alpha… P02458                rheuma…
- 6  1772833     133152 IQGLIGSVEE… Keratin, type … Q04695                psoria…
- 7  1772846     133152 IQGLIGSVEE… Keratin, type … Q04695                psoria…
- 8  1772861     133152 IQGLIGSVEE… Keratin, type … Q04695                psoria…
- 9  1772874     133152 IQGLIGSVEE… Keratin, type … Q04695                psoria…
-10  1782105     135371 WLAMVLGLVA… Blood group Rh… Q02161                autoim…
-# ℹ 349 more rows
-# ℹ 3 more variables: MHC_Allele &lt;chr&gt;, Pathogen_ID &lt;chr&gt;, count &lt;int&gt;</code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>DRB1_0401_results</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code># A tibble: 360 × 9
-   Assay_ID Epitope_ID Epitope     Epitope_Protein Epitope_Protein_annot Disease
-      &lt;int&gt;      &lt;int&gt; &lt;chr&gt;       &lt;chr&gt;           &lt;chr&gt;                 &lt;chr&gt;  
- 1  1782096     134875 ATIPSLSAML… Blood group Rh… Q02161                autoim…
- 2  1782096     134875 ATIPSLSAML… Blood group Rh… Q02161                autoim…
- 3  1782138     134875 ATIPSLSAML… Blood group Rh… P18577                autoim…
- 4  1782138     134875 ATIPSLSAML… Blood group Rh… P18577                autoim…
- 5  1782085     135023 ILLDGFLSQF… Blood group Rh… Q02161                autoim…
- 6  5575325     913900 PGAGSLQPLA… Insulin         P01308                type 1…
- 7  6346189     948722 GASSSLSPLQ… Receptor-type … Q16849                type 1…
- 8  6346191     948722 GASSSLSPLQ… Receptor-type … Q16849                type 1…
- 9  6346192     948722 GASSSLSPLQ… Receptor-type … Q16849                type 1…
-10 12801444    1346326 VTVSWNSGAL… Immunoglobulin… P01857                rheuma…
-# ℹ 350 more rows
-# ℹ 3 more variables: MHC_Allele &lt;chr&gt;, Pathogen_ID &lt;chr&gt;, count &lt;int&gt;</code></pre>
-</div>
-</div>
-</section>
-<section id="converting-gene-name-for-comparison" class="level3">
-<h3 class="anchored" data-anchor-id="converting-gene-name-for-comparison">Converting gene name for comparison</h3>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Function to get organism from UniProt ID using biomaRt</span></span>
-<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>get_organism_from_uniprot_biomart <span class="ot">&lt;-</span> <span class="cf">function</span>(uniprot_id) {</span>
-<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Use ENSEMBL's mart and dataset for human genes</span></span>
-<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>  ensembl <span class="ot">&lt;-</span> <span class="fu">useMart</span>(<span class="st">"ENSEMBL_MART_ENSEMBL"</span>, <span class="at">dataset =</span> <span class="st">"hsapiens_gene_ensembl"</span>)</span>
-<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Query the UniProt ID to get organism information</span></span>
-<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>  organism_info <span class="ot">&lt;-</span> <span class="fu">getBM</span>(<span class="at">attributes =</span> <span class="fu">c</span>(<span class="st">"uniprot_swissprot"</span>, <span class="st">"organism_name"</span>),</span>
-<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>                         <span class="at">filters =</span> <span class="st">"uniprot_swissprot"</span>,</span>
-<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>                         <span class="at">values =</span> uniprot_id,</span>
-<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>                         <span class="at">mart =</span> ensembl)</span>
-<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Return organism name</span></span>
-<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(organism_info<span class="sc">$</span>organism_name)</span>
-<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb20-15"><a href="#cb20-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb20-16"><a href="#cb20-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Example usage</span></span>
-<span id="cb20-17"><a href="#cb20-17" aria-hidden="true" tabindex="-1"></a>uniprot_id <span class="ot">&lt;-</span> <span class="st">"P03211"</span>  <span class="co"># Replace with your UniProt ID</span></span>
-<span id="cb20-18"><a href="#cb20-18" aria-hidden="true" tabindex="-1"></a>organism <span class="ot">&lt;-</span> <span class="fu">get_organism_from_uniprot_biomart</span>(uniprot_id)</span>
-<span id="cb20-19"><a href="#cb20-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb20-20"><a href="#cb20-20" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb20-21"><a href="#cb20-21" aria-hidden="true" tabindex="-1"></a>autoimmune_data <span class="sc">|&gt;</span></span>
-<span id="cb20-22"><a href="#cb20-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(Disease) <span class="sc">|&gt;</span></span>
-<span id="cb20-23"><a href="#cb20-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="fu">n</span>())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="ex">mmseqs</span> createdb unique_IEDB_infectius_peptides.fsa infectius_peptides_DB</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a><span class="ex">mmseqs</span> cluster infectius_peptides_DB infectius_cluster tmp</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a><span class="ex">mmseqs</span> createtsv infectius_peptides_DB infectius_peptides_DB infectius_cluster infectius_cluster.tsv</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
 </section>
