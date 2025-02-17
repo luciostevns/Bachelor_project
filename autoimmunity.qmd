@@ -181,14 +181,14 @@ IEDB_DRB1_0401 <- Allele_filterer(autoimmune_data, "[YFIW].{4}[TNSDV].{3}", c(2,
 #| message: false
 #| warning: false
 
-write.csv(pathogen_DRB1_1501, "C:/Users/lucio/Desktop/DTU stuff/Bachelor stuff/Bachelor Python stuff/pathogen_DRB1_1501.csv", row.names = FALSE)
-write.csv(IEDB_DRB1_1501, "C:/Users/lucio/Desktop/DTU stuff/Bachelor stuff/Bachelor Python stuff/IEDB_DRB1_1501.csv", row.names = FALSE)
+write.csv(pathogen_DRB1_1501, "./Python stuff/pathogen_DRB1_1501.csv", row.names = FALSE)
+write.csv(IEDB_DRB1_1501, "./Python stuff/IEDB_DRB1_1501.csv", row.names = FALSE)
 
-write.csv(pathogen_DRB1_0401, "C:/Users/lucio/Desktop/DTU stuff/Bachelor stuff/Bachelor Python stuff/pathogen_DRB1_0401.csv", row.names = FALSE)
-write.csv(IEDB_DRB1_0401, "C:/Users/lucio/Desktop/DTU stuff/Bachelor stuff/Bachelor Python stuff/IEDB_DRB1_0401.csv", row.names = FALSE)
+write.csv(pathogen_DRB1_0401, "./Python stuff/pathogen_DRB1_0401.csv", row.names = FALSE)
+write.csv(IEDB_DRB1_0401, "./Python stuff/IEDB_DRB1_0401.csv", row.names = FALSE)
 
-write.csv(pathogen_DRB5_0101, "C:/Users/lucio/Desktop/DTU stuff/Bachelor stuff/Bachelor Python stuff/pathogen_DRB5_0101.csv", row.names = FALSE)
-write.csv(IEDB_DRB5_0101, "C:/Users/lucio/Desktop/DTU stuff/Bachelor stuff/Bachelor Python stuff/IEDB_DRB5_0101.csv", row.names = FALSE)
+write.csv(pathogen_DRB5_0101, "./Python stuff/pathogen_DRB5_0101.csv", row.names = FALSE)
+write.csv(IEDB_DRB5_0101, "./Python stuff/IEDB_DRB5_0101.csv", row.names = FALSE)
 ```
 
 ### Displaying the python results:
