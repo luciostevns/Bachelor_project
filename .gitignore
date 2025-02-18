@@ -4,4 +4,11 @@
 .Ruserdata
 Data/results/
 Data/all_logos/
-Python/Data/
+Python stuff/Data/
+Python/Data/uniprot_sprot.fasta
+Python/Data/pathogen_DRB5_0101.csv
+Python/Data/pathogen_DRB1_0401.csv
+Python/Data/pathogen_DRB1_1501.csv
+Python/Data/IEDB_DRB5_0101.csv
+Python/Data/IEDB_DRB1_0401.csv
+Python/Data/IEDB_DRB1_1501.csv
