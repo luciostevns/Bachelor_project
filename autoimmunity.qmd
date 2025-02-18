@@ -181,56 +181,60 @@ IEDB_DRB1_0401 <- Allele_filterer(autoimmune_data, "[YFIW].{4}[TNSDV].{3}", c(2,
 #| message: false
 #| warning: false
 
-write.csv(pathogen_DRB1_1501, "./Python stuff/pathogen_DRB1_1501.csv", row.names = FALSE)
-write.csv(IEDB_DRB1_1501, "./Python stuff/IEDB_DRB1_1501.csv", row.names = FALSE)
+write.csv(pathogen_DRB1_1501, "./Python stuff/Data/pathogen_DRB1_1501.csv", row.names = FALSE)
+write.csv(IEDB_DRB1_1501, "./Python stuff/Data/IEDB_DRB1_1501.csv", row.names = FALSE)
 
-write.csv(pathogen_DRB1_0401, "./Python stuff/pathogen_DRB1_0401.csv", row.names = FALSE)
-write.csv(IEDB_DRB1_0401, "./Python stuff/IEDB_DRB1_0401.csv", row.names = FALSE)
+write.csv(pathogen_DRB1_0401, "./Python stuff/Data/pathogen_DRB1_0401.csv", row.names = FALSE)
+write.csv(IEDB_DRB1_0401, "./Python stuff/Data/IEDB_DRB1_0401.csv", row.names = FALSE)
 
-write.csv(pathogen_DRB5_0101, "./Python stuff/pathogen_DRB5_0101.csv", row.names = FALSE)
-write.csv(IEDB_DRB5_0101, "./Python stuff/IEDB_DRB5_0101.csv", row.names = FALSE)
+write.csv(pathogen_DRB5_0101, "./Python stuff/Data/pathogen_DRB5_0101.csv", row.names = FALSE)
+write.csv(IEDB_DRB5_0101, "./Python stuff/Data/IEDB_DRB5_0101.csv", row.names = FALSE)
 ```
 
-### Displaying the python results:
+### Displaying the python similarity method results:
 
 ```{r}
-#| eval: true
+#| eval: false
 #| message: false
 #| warning: false
 
-similarity_results_DRB1_1501 <- read_csv("./Data/similarity_results_DRB1_1501.csv")
-similarity_results_DRB1_0401 <- read_csv("./Data/similarity_results_DRB1_0401.csv")
-similarity_results_DRB5_0101 <- read_csv("./Data/similarity_results_DRB5_0101.csv")
+all_sim <- read_csv("./Data/results/sim_finished.csv")
 
-all_similarities_significants <- bind_rows(similarity_results_DRB1_1501,
-                                           similarity_results_DRB1_0401,
-                                           similarity_results_DRB5_0101) |>
+all_sim <- all_sim |>
   left_join(dplyr::select(autoimmune_data, Epitope_ID, Disease, Epitope_Protein),
             by = "Epitope_ID") |>
   unique()
 
-head(all_similarities_significants)
-
-write.csv(all_similarities_significants, "./Python stuff/similarity_matrix.csv", row.names = FALSE)
-```
-
-### Viewing organisms most responsible:
-
-```{r}
-similarity_with_organism <- read_csv("./Data/similarity_matrix_with_organism.csv")
-
-similarity_with_organism |>
-  group_by(`Organism Source`) |>
+all_sim |>
+  group_by(Pathogen_pep) |>
   summarise(amount = n()) |>
   arrange(desc(amount))
 ```
+
+### Displaying python blosom method results:
+
+```{r}
+all_blosom_results <- read_csv("./Data/results/blosom_finished.csv")
+
+all_blosom_results <- all_blosom_results |>
+  left_join(dplyr::select(autoimmune_data, Epitope_ID, Disease, Epitope_Protein),
+            by = "Epitope_ID") |>
+  unique()
+
+all_blosom_results |>
+  group_by(Pathogen_pep) |>
+  summarise(amount = n()) |>
+  arrange(desc(amount))
+```
+
+### 
 
 ### Looking at what MHC alleles got caught in anchor filtering:
 
 should match allele or be class II
 
 ```{r}
-#| eval: true
+#| eval: false
 #| message: false
 #| warning: false
 
