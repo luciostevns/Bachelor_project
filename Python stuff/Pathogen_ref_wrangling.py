@@ -4,10 +4,16 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-
-# Read the TSV files
+    
+# Pathogen reference data
 pathogen_ref = pd.read_csv("./Data/pathogen_ref.tsv", sep='\t')
-proteome = pd.read_csv("./Data/proteome.tsv", sep='\t')
+
+# Proteome data
+referenced_proteome = pd.read_csv("./Data/referenced_proteomes.tsv", sep='\t')
+other_proteome = pd.read_csv("./Data/other_proteomes.tsv", sep='\t')
+
+# binding rows of ref and other
+proteome = pd.concat([referenced_proteome, other_proteome])
 
 # Define the pattern you want to detect (e.g., 'human' or 'homo' in any case)
 pattern = r'(?i)human|homo'
@@ -31,6 +37,7 @@ unique_merged = merged_proteome.dropna(subset=['Proteome Id'])
 # Saving certain columns from merged df as .csv
 unique_merged[["Proteome Id", "#Organism group","Strain", "Protein count", "Assembly"]].to_csv("./Data/Pathogenic_bacteria_proteome.csv", index=False)
 
-print("unique: ", unique_merged.shape)
-print("merged: ", merged_proteome.shape)
+# Saving proteomes IDs as .txt for download of full proteomes
+unique_merged['Proteome Id'].to_csv("./Data/proteome_ids.txt", header=False, index=False)
+
 # %%

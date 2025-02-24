@@ -1,34 +1,48 @@
 #%%
 
 import pandas as pd
-from Uniprot_ID_TO_organism_ID import with_organism_name
-from Blosom_alignment import process_blosom_alignment
-from allignment import process_alignment
+from functions import process_blosom_alignment
+from functions import extract_cores_from_proteome
+import time
 
 if __name__ == "__main__":
-    pathogen_DRB1_0401 = pd.read_csv("./Data/pathogen_DRB1_0401.csv")
+
+    # Read in IEDB allele specific data
     IEDB_DRB1_0401 = pd.read_csv("./Data/IEDB_DRB1_0401.csv")
-    pathogen_DRB1_1501 = pd.read_csv("./Data/pathogen_DRB1_1501.csv")
     IEDB_DRB1_1501 = pd.read_csv("./Data/IEDB_DRB1_1501.csv")
-    pathogen_DRB5_0101 = pd.read_csv("./Data/pathogen_DRB5_0101.csv")
     IEDB_DRB5_0101 = pd.read_csv("./Data/IEDB_DRB5_0101.csv")
+
+    # Define the patterns, ORDER IMPORTANT for later workflow insert
+    # patterns in order of alleles
+    pattern_tcore_list = [
+        (r'[FYILV].{4}[ASGP].{2}[KR]', [2,3,4,5,7,8]),
+        (r'[ILV].{2}[YF].{1}[SNGDA].{2}[LVAI]', [2,3,5,7,8])
+    ]
+    
+    start_time = time.time()
+
+    # Read in pathogen allele specific data
+    pathogen_wrangled = extract_cores_from_proteome("./Data/all_proteomes.fasta", pattern_tcore_list, 100)
+    
+    print("time after pathogen wrangeling: ", time.time() - start_time)
+
+    # Assign the DataFrames to variables with meaningful names
+    pathogen_DRB1_0401 = pathogen_wrangled[pattern_tcore_list[0][0]]
+    pathogen_DRB1_1501 = pathogen_wrangled[pattern_tcore_list[1][0]]
 
     # Define pairs of DataFrames
     pairs = [
         (pathogen_DRB1_0401, IEDB_DRB1_0401),
-        (pathogen_DRB1_1501, IEDB_DRB1_1501),
-        (pathogen_DRB5_0101, IEDB_DRB5_0101)
+        (pathogen_DRB1_1501, IEDB_DRB1_1501)
     ]
 
     # Process the pairs
-    combined_blosom = process_blosom_alignment(pairs, 2)
-    combined_sim = process_alignment(pairs, 60, 90)
+    combined_blosom = process_blosom_alignment(pairs, 3)
 
-    blosom_finished = with_organism_name(combined_blosom, "./Data/uniprot_sprot.fasta")
-    sim_finished = with_organism_name(combined_sim, "./Data/uniprot_sprot.fasta")
+    print(f"Time aftr scorring: {time.time() - start_time} seconds")
 
     # Save the combined DataFrame to a CSV file
-    blosom_finished.to_csv("../Data/results/blosom_finished.csv", index=False)
-    sim_finished.to_csv("../Data/results/sim_finished.csv", index=False)
+    combined_blosom.to_csv("../Data/results/blosom_finished.csv", index=False)
+
 
 # %%

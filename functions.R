@@ -27,8 +27,8 @@ Allele_filterer <- function(df, allele_pattern, TCR_bind_pos){
     filter(str_detect(Seq, allele_pattern)) |>
     rowwise() |>
     mutate(start_index = str_locate(Seq, allele_pattern)[1]) |>
-    mutate(core = substring(Seq,start_index,start_index+8)) |>
-    mutate(TCR_bind_core = paste0(strsplit(core, "")[[1]][TCR_bind_pos],
+    mutate(IEDB_core = substring(Seq,start_index,start_index+8)) |>
+    mutate(IEDB_tcore = paste0(strsplit(IEDB_core, "")[[1]][TCR_bind_pos],
                                   collapse = "")) |>
     ungroup()
 }

@@ -56,24 +56,9 @@ new_col_names <- gsub("_NA$", "", new_col_names)
 
 autoimmune_data <- read_csv("./Data/autoimmune_data.csv", skip = 2, col_names = new_col_names)
 
-# From class will be replaced with bigger bacteria proteome dataset
-pathogen_fasta <- readAAStringSet("./Data/IEDB_infectius_peptides.fsa",)
-
-# Clustered bacteria proteome dataset using mmseq2
-#pathogen_clusters <- read_tsv("./Data/infectius_cluster.tsv", col_names = c("cluster_ID", "member_ID"))
-
-# Experimentally verifiyed pathogenic peptides causing autoimmune diseases
-exp_verified_patho_peps <- read_csv("./Data/Exp_verified_pathogenic_peptides.txt")
-exp_verified_prot_annot <- read_csv("./Data/temp_prot_annot_verified.csv")
-
-exp_verified_patho_peps <- left_join(exp_verified_patho_peps, exp_verified_prot_annot, by = "ID") |>
-  rename("Protein" = "Pathogen_pep") |>
-  filter(!is.na(Pathogen_pep))
-
 # Removing elements no longer needed
 rm(headers)
 rm(new_col_names)
-rm(exp_verified_prot_annot)
 ```
 
 ### Wrangling IEDB tables
@@ -134,26 +119,6 @@ DRB1_1501_motifs <- MHC_motif_finder("DRB1_1501")
 DRB5_0101_motifs <- MHC_motif_finder("DRB5_0101")
 ```
 
-### Tidying pathogen proteome data and filtering for MHC alleles and obtaining binding core:
-
-```{r}
-#| message: false
-#| warning: false
-
-# Making the pathogen proteome fastafile to a dataframe
-pathogen_seqs <- data.frame(
-    Pathogen_prot = names(pathogen_fasta),
-    Seq = as.character(pathogen_fasta)
-)
-
-# Filtering pathogen proteome based on the found anchors
-pathogen_DRB5_0101 <- Allele_filterer(pathogen_seqs, "[FYILV].{4}[ASGPN].{2}[KR]", c(2,3,4,5,7,8))
-
-pathogen_DRB1_1501 <- Allele_filterer(pathogen_seqs, "[ILV].{2}[YF].{1}[SNGDA].{2}[LVAI]", c(2,3,5,7,8))
-
-pathogen_DRB1_0401 <- Allele_filterer(pathogen_seqs, "[YFI].{2}[DEA].{1}[TNSDV].{2}[ASGQ]", c(2,3,5,7,8))
-```
-
 ### Filtering IEDB data for MHC restriction and obtaining binding core:
 
 using less stringent anchorpoints and extra filters to capture most of the actual reported MHC restriction
@@ -181,74 +146,27 @@ IEDB_DRB1_0401 <- Allele_filterer(autoimmune_data, "[YFIW].{4}[TNSDV].{3}", c(2,
 #| message: false
 #| warning: false
 
-write.csv(pathogen_DRB1_1501, "./Python stuff/Data/pathogen_DRB1_1501.csv", row.names = FALSE)
 write.csv(IEDB_DRB1_1501, "./Python stuff/Data/IEDB_DRB1_1501.csv", row.names = FALSE)
 
-write.csv(pathogen_DRB1_0401, "./Python stuff/Data/pathogen_DRB1_0401.csv", row.names = FALSE)
 write.csv(IEDB_DRB1_0401, "./Python stuff/Data/IEDB_DRB1_0401.csv", row.names = FALSE)
 
-write.csv(pathogen_DRB5_0101, "./Python stuff/Data/pathogen_DRB5_0101.csv", row.names = FALSE)
 write.csv(IEDB_DRB5_0101, "./Python stuff/Data/IEDB_DRB5_0101.csv", row.names = FALSE)
-```
-
-### Displaying the python similarity method results:
-
-```{r}
-#| eval: false
-#| message: false
-#| warning: false
-
-all_sim <- read_csv("./Data/results/sim_finished.csv")
-
-all_sim <- all_sim |>
-  left_join(dplyr::select(autoimmune_data, Epitope_ID, Disease, Epitope_Protein),
-            by = "Epitope_ID") |>
-  unique()
-
-all_sim |>
-  group_by(Pathogen_pep) |>
-  summarise(amount = n()) |>
-  arrange(desc(amount))
-```
-
-### Displaying python blosom method results:
-
-```{r}
-all_blosom_results <- read_csv("./Data/results/blosom_finished.csv")
-
-all_blosom_results <- all_blosom_results |>
-  left_join(dplyr::select(autoimmune_data, Epitope_ID, Disease, Epitope_Protein),
-            by = "Epitope_ID") |>
-  unique()
-
-all_blosom_results |>
-  group_by(Pathogen_pep) |>
-  summarise(amount = n()) |>
-  arrange(desc(amount))
 ```
 
 ### 
 
-### Looking at what MHC alleles got caught in anchor filtering:
-
-should match allele or be class II
+### Displaying python blosom method results:
 
 ```{r}
 #| eval: false
-#| message: false
-#| warning: false
 
-IEDB_DRB1_0401 |>
-  group_by(MHC_Allele) |>
-  summarise(n())
+all_blosom_results <- read_csv("./Data/results/blosom_finished.csv")
 
-IEDB_DRB1_1501 |>
-  group_by(MHC_Allele) |>
-  summarise(n())
 
-IEDB_DRB5_0101 |>
-  group_by(MHC_Allele) |>
-  summarise(n())
+all_blosom_results |>
+  group_by(`Organism_source`) |>
+  summarise(amount = n()) |>
+  arrange(desc(amount))
 ```
 
 ### Cluster wrangeling using mmseqs2:
