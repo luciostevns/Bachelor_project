@@ -47,18 +47,10 @@ library("stringdist")
 
 source("./functions.R")
 
-# Reading in headers
-headers <- read_csv("./Data/autoimmune_data.csv", n_max = 2, col_names = FALSE)
 
-# Combine the first two rows into a single header
-new_col_names <- paste(headers[1,], headers[2,], sep = "_")
-new_col_names <- gsub("_NA$", "", new_col_names)
+# Read the full IEDB dataset
+autoimmune_data <- read_tsv("./Data/tcell_table_export_1740575887.tsv")
 
-autoimmune_data <- read_csv("./Data/autoimmune_data.csv", skip = 2, col_names = new_col_names)
-
-# Removing elements no longer needed
-rm(headers)
-rm(new_col_names)
 ```
 
 ### Wrangling IEDB tables
@@ -67,45 +59,28 @@ rm(new_col_names)
 #| message: false
 #| warning: false
 
-known_diseases <- c('multiple sclerosis',"type 1 diabetes mellitus", "rheumatoid arthritis", "myasthenia gravis","systemic lupus erythematosus", "Graves' disease, Graves disease", "autoimmune hemolytic anemia", "psoriasis", "autoimmune uveitis", "autoimmune thyroiditis", "vitiligo", "alopecia areata", "Vogt-Koyanagi-Harada disease", "Goodpasture syndrome", "Behcet's disease", 'systemic lupus erythematosus', 'neuromyelitis optica', 'primary biliary cholangitis', 'autoimmune hepatitis', 'autoimmune vasculitis', 'pemphigus',"Sjogren's syndrome")
-
 
 # Tidying data and filtering with relevant filters
-autoimmune_data <- autoimmune_data |>
-  dplyr::rename(
-    Assay_ID = "Assay ID_IEDB IRI",
-    Epitope_ID = "Epitope_IEDB IRI",
-    Seq = "Epitope_Name",
-    Epitope_Protein = "Epitope_Molecule Parent",
-    Epitope_Protein_annot = "Epitope_Molecule Parent IRI",
-    Disease = "1st in vivo Process_Disease",
-    MHC_Allele = "MHC Restriction_Name"
-  ) |>
-  mutate(
-    Seq = str_trim(str_replace(Seq, "\\+.*", "")),
-    Assay_ID = as.integer(str_extract(Assay_ID, "\\d+$")),
-    Epitope_ID = as.integer(str_extract(Epitope_ID, "\\d+$")),
-    Epitope_Protein_annot = str_extract(Epitope_Protein_annot, "(?<=/)[^/]+$")
+autoimmune_data_wrangled <- autoimmune_data |>
+  dplyr::rename(Assay_ID = "Assay ID - IEDB IRI",
+                Sequence = `Epitope - Name`,
+                MHC_restriction = `MHC Restriction - Name`) |>
+  mutate(Sequence = str_trim(str_replace(Sequence, "\\+.*", ""))
   ) |>
   filter(
-    is.na(`Epitope_Modified residues`),
-    str_length(Seq) > 12 & str_length(Seq) < 26,
-    !is.na(MHC_Allele) & !is.na(Seq),
-    str_detect(Seq, "^[ACDEFGHIKLMNPQRSTVWY]+$"),
-    Disease %in% known_diseases,
-    !(str_detect(Epitope_Protein, "T cell") | str_detect(Epitope_Protein, "Immunoglobulin"))
-  ) |>
-  dplyr::select(
-    Assay_ID, Epitope_ID, Seq, Epitope_Protein,
-    Epitope_Protein_annot, Disease, MHC_Allele
-  ) |>
-  unique()
+    is.na(`Epitope - Modified residues`),
+    str_length(Sequence) > 12 & str_length(Sequence) < 26
+  )
 
 # Find MHC restriction for epitopes to look into.
-autoimmune_data |>
-  group_by(MHC_Allele) |>
+autoimmune_data_wrangled |>
+  group_by(MHC_restriction) |>
   summarise(amount = n(), .groups = "drop") |>
   arrange(desc(amount))
+
+
+write.csv(autoimmune_data_wrangled, "./Python stuff/Data/wrangled_IEDB.csv", row.names = FALSE)
+
 ```
 
 ### Looking at anchorpoints for MHC alleles from netMHCIIpan
