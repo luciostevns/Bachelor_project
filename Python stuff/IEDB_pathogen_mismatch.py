@@ -7,8 +7,8 @@ from collections import defaultdict
 import edlib
 
 # Load data
-pathogen_data = pd.read_csv("./Data/wrangled_rep_pathogen_prots.csv")
-IEDB_data = pd.read_csv("./Data/wrangled_IEDB.csv")
+pathogen_data = pd.read_csv("../Data/wrangled_rep_pathogen_prots.csv")
+IEDB_data = pd.read_csv("../Data/wrangled_IEDB.csv")
 
 # Extract relevant columns
 epitope_sequences = IEDB_data["Sequence"].to_numpy()
@@ -72,6 +72,6 @@ match_df = pd.DataFrame(matches, columns=["Assay_ID", "Epitope Source", "Protein
 print(f"\nTotal Matches Found: {len(matches)}")
 
 # Optionally save to CSV
-match_df.to_csv("./Data/matching_9mers.csv", index=False)
+match_df.to_csv("../Data/matching_9mers.csv", index=False)
 
 # %%

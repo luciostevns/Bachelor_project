@@ -6,14 +6,14 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 # Load the MMseqs2 clustering result
-reps = pd.read_csv("./Data/clusterRes_cluster.tsv", sep="\t", header=None, names=["Representative", "Member"])
+reps = pd.read_csv("../Data/clusterRes_cluster.tsv", sep="\t", header=None, names=["Representative", "Member"])
 
 # Read the FASTA file
-ref_prots_fasta = list(SeqIO.parse("./Data/clusterRes_rep_seq.fasta", "fasta"))
-all_fasta = list(SeqIO.parse("./Data/all_proteomes.fasta", "fasta"))
+ref_prots_fasta = list(SeqIO.parse("../Data/clusterRes_rep_seq.fasta", "fasta"))
+all_fasta = list(SeqIO.parse("../Data/all_proteomes.fasta", "fasta"))
 
-def parse_fasta_to_df(fasta):
-    rep_organism = []
+def parse_fasta_to_df(fasta): 
+    metadata = []
     
     for seq_record in fasta:
         header = seq_record.description
@@ -27,6 +27,10 @@ def parse_fasta_to_df(fasta):
         if organism_source:
             organism_source = ' '.join(organism_source.split()[:2])  # Keep only genus and species
         
+        # Extract the taxonomy ID
+        taxonomy_id_match = re.search(r'OX=(\d+)', header)
+        taxonomy_id = taxonomy_id_match.group(1) if taxonomy_id_match else None
+        
         # Extract the annotation (exclude the repeated protein ID)
         annotation = None
         header_parts = header.split()
@@ -35,11 +39,13 @@ def parse_fasta_to_df(fasta):
             annotation = possible_annotation.split('OS=')[0].strip()  # Stop at OS= if present
         
         # Add extracted data to list
-        rep_organism.append([protein_id, organism_source, annotation, str(seq_record.seq)])
+        metadata.append([protein_id, organism_source, taxonomy_id, annotation, str(seq_record.seq)])
     
     # Convert to DataFrame
-    rep_organism_df = pd.DataFrame(rep_organism, columns=["Protein ID", "Organism Source", "Annotation", "Sequence"])
-    return rep_organism_df
+    metadata_df = pd.DataFrame(metadata, columns=["Protein ID", "Organism Source", "Taxonomy ID", "Annotation", "Sequence"])
+    
+    return metadata_df
+
 
 
 # Run the function to retrieve protein metadata from fastas
@@ -47,7 +53,8 @@ rep_df = parse_fasta_to_df(ref_prots_fasta)
 all_df = parse_fasta_to_df(all_fasta)
 
 # Save to csv
-#all_df.to_csv("./Data/wrangled_all_pathogen_prots.csv", index=False)
+all_df.to_csv("../Data/wrangled_all_pathogen_prots.csv", index=False)
+rep_df.to_csv("../Data/wrangled_rep_pathogen_prots.csv", index=False)
 
 
 #------------------------------ PLOTING -------------------------------#
@@ -56,7 +63,7 @@ all_df = parse_fasta_to_df(all_fasta)
 datasets = [("Representative Proteins", rep_df), ("All Proteins", all_df)]
 
 # Define the columns to plot
-columns = ["Organism Source", "Subcellular location [CC]"]
+columns = ["Organism Source"]
 
 # Loop over datasets and columns
 for dataset_name, df in datasets:

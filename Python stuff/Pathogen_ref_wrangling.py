@@ -4,11 +4,11 @@ import pandas as pd
 import numpy as np
     
 # Pathogen reference data
-pathogen_ref = pd.read_csv("./Data/pathogen_ref.tsv", sep='\t')
+pathogen_ref = pd.read_csv("../Data/pathogen_ref.tsv", sep='\t')
 
 # Proteome data
-referenced_proteome = pd.read_csv("./Data/referenced_proteomes.tsv", sep='\t')
-other_proteome = pd.read_csv("./Data/other_proteomes.tsv", sep='\t')
+referenced_proteome = pd.read_csv("../Data/referenced_proteomes.tsv", sep='\t')
+other_proteome = pd.read_csv("../Data/other_proteomes.tsv", sep='\t')
 
 # binding rows of ref and other
 proteome = pd.concat([referenced_proteome, other_proteome])
@@ -39,10 +39,10 @@ merged_proteome = proteome.merge(filtered_pathogen_ref, how="left", left_on="Gen
 unique_merged = merged_proteome.dropna(subset=['Assembly'])
 
 # Saving certain columns from merged df as .csv
-unique_merged[["Proteome Id", "#Organism group","Strain", "Protein count", "Assembly"]].to_csv("./Data/Pathogenic_bacteria_proteome.csv", index=False)
+unique_merged[["Proteome Id", "#Organism group","Strain", "Protein count", "Assembly"]].to_csv("../Data/Pathogenic_bacteria_proteome.csv", index=False)
 
 # Saving proteomes IDs as .txt for download of full proteomes
-unique_merged['Proteome Id'].to_csv("./Data/proteome_ids.txt", header=False, index=False)
+unique_merged['Proteome Id'].to_csv("../Data/proteome_ids.txt", header=False, index=False)
 
 empty_proteomes = ["UP001298242","UP001299051","UP001299808","UP001304105", "UP001311976","UP001317873","UP001321007","UP001347461","UP001362035","UP001368540","UP001370664","UP001375347","UP001381400","UP001389104","UP001392488","UP001394715","UP001396551","UP001435425","UP001441349","UP001458050","UP001473423","UP001488889"]
 

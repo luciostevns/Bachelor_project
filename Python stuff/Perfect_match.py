@@ -8,8 +8,8 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 
 # Load data
-pathogen_data = pd.read_csv("./Data/wrangled_rep_pathogen_prots.csv")
-IEDB_data = pd.read_csv("./Data/wrangled_IEDB.csv")
+pathogen_data = pd.read_csv("../Data/wrangled_rep_pathogen_prots.csv")
+IEDB_data = pd.read_csv("../Data/wrangled_IEDB.csv")
 
 # Extract relevant columns
 epitope_sequences = IEDB_data["Sequence"].to_numpy()
@@ -59,7 +59,7 @@ with tqdm(total=len(protein_sequences), desc="Processing Proteins") as pbar:
 # Convert to DataFrame for easier viewing & saving
 match_df = pd.DataFrame(matches, columns=["Assay_ID", "Epitope Source", "Disease", "Protein_ID", "Organism Source", "Pathogen Annotation", "Subcellular location (pathogen)", "Matched_9mer"])
 
-match_df.to_csv("./Data/perfect_matches_rep.csv", index=False)
+match_df.to_csv("../Data/perfect_matches_rep.csv", index=False)
 
 # Print total matches and head of DataFrame
 print(f"\nTotal Matches Found: {len(matches)}")
