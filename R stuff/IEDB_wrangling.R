@@ -5,7 +5,7 @@ library("tidyverse")
 ############### Initial filtering and wrangling ###############################
 
 # Read the full IEDB dataset
-autoimmune_data <- read_tsv("../Data/tcell_table_export_1740575887.tsv")
+autoimmune_data <- read_tsv("./Data/tcell_table_export_1740575887.tsv")
 
 # Tidying data and filtering with relevant filters
 autoimmune_data_wrangled <- autoimmune_data |>
@@ -18,7 +18,7 @@ autoimmune_data_wrangled <- autoimmune_data |>
   ) |>
   filter(
     is.na(`Epitope - Modified residues`),
-    str_length(Sequence) > 12 & str_length(Sequence) < 26
+    str_length(Sequence) > 11 & str_length(Sequence) < 26
   ) |>
   distinct(Sequence, .keep_all = TRUE) |>
   dplyr::select(Assay_ID,Sequence, Protein_source, Disease, MHC_restriction)
