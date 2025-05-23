@@ -12,16 +12,22 @@ autoimmune_data_wrangled <- autoimmune_data |>
   dplyr::rename(Assay_ID = "Assay ID - IEDB IRI",
                 Sequence = `Epitope - Name`,
                 Protein_source = `Epitope - Molecule Parent`,
+                Protein_ID = `Epitope - Molecule Parent IRI`,
                 Disease = `1st in vivo Process - Disease`,
-                MHC_restriction = `MHC Restriction - Name`) |>
-  mutate(Sequence = str_trim(str_replace(Sequence, "\\+.*", ""))
+                Disease_stage = `1st in vivo Process - Disease Stage`,
+                MHC_restriction = `MHC Restriction - Name`,
+                epitope_start_pos = `Epitope - Starting Position`,
+                epitope_end_pos = `Epitope - Ending Position`) |>
+  mutate(Sequence = str_trim(str_replace(Sequence, "\\+.*", "")),
+         Protein_ID = str_extract(Protein_ID, "[^/]+$")
   ) |>
   filter(
     is.na(`Epitope - Modified residues`),
     str_length(Sequence) > 11 & str_length(Sequence) < 26
   ) |>
   distinct(Sequence, .keep_all = TRUE) |>
-  dplyr::select(Assay_ID,Sequence, Protein_source, Disease, MHC_restriction)
+  dplyr::select(Assay_ID,Sequence, Protein_ID, Protein_source, Disease, Disease_stage, MHC_restriction,
+                epitope_start_pos,epitope_end_pos)
 
 
 ########## Nested proteins removal #####################################
@@ -55,6 +61,6 @@ filtered_sequences <- nested_sequences |>
   filter(!Is_nested) |>
   dplyr::select(-Nine_mers, -Is_nested)  # Remove extra columns
 
-write.csv(filtered_sequences, "../Data/wrangled_IEDB.csv", row.names = FALSE)
+write.csv(filtered_sequences, "./Data/wrangled_IEDB.csv", row.names = FALSE)
 
 ########################################################################################
