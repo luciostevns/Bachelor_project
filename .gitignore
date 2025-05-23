@@ -12,3 +12,6 @@ Python/Data/pathogen_DRB1_1501.csv
 Python/Data/IEDB_DRB5_0101.csv
 Python/Data/IEDB_DRB1_0401.csv
 Python/Data/IEDB_DRB1_1501.csv
+Data/
+final plots/
+plots/
