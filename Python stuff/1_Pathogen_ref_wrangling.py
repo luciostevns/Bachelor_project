@@ -32,14 +32,15 @@ filtered_pathogen_ref = filtered_df[~filtered_df['Host'].str.contains(r'(?i)non'
 
 # Merging proteome data onto ref
 # Look into why more rows is occuring, should only have 1 ID
-merged_proteome = proteome.merge(filtered_pathogen_ref, how="left", left_on="Genome assembly ID", right_on="Assembly")
+merged_proteome = proteome.merge(filtered_pathogen_ref, how="left", left_on="Genome assembly ID", right_on="Assembly", suffixes=('', '_ref'))
 
 # Remove weird instances with missing Proteime id
 # Looks at NA's
 unique_merged = merged_proteome.dropna(subset=['Assembly'])
 
 # Saving certain columns from merged df as .csv
-unique_merged[["Proteome Id", "#Organism group","Strain", "Protein count", "Assembly"]].to_csv("../Data/Pathogenic_bacteria_proteome.csv", index=False)
+unique_merged[["Proteome Id", "#Organism group", "Strain", "Taxonomic lineage", "Protein count", "Assembly"]].to_csv("../Data/Pathogenic_bacteria_proteome.csv", index=False)
+
 
 # Saving proteomes IDs as .txt for download of full proteomes
 unique_merged['Proteome Id'].to_csv("../Data/proteome_ids.txt", header=False, index=False)
